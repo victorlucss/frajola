@@ -1,18 +1,20 @@
-# MeetLog
+# Frajola 🐱
 
 > Free, cross-platform meeting recorder with transcription and AI-powered notes. No bots. Privacy-first.
 
+**Website:** [frajola.app](https://frajola.app)
+
 **Inspired by [Amie](https://amie.so)** - the elegant AI note taker with notch UI.
 
-## What is MeetLog?
+## What is Frajola?
 
-MeetLog is a desktop app that records your meetings directly from your computer's audio output and microphone - no need to invite a bot to your calls. It works with any meeting platform (Zoom, Google Meet, Teams, etc.) and generates transcripts and meeting notes automatically.
+Frajola is a desktop app that records your meetings directly from your computer's audio output and microphone - no need to invite a bot to your calls. It works with any meeting platform (Zoom, Google Meet, Teams, etc.) and generates transcripts and meeting notes automatically.
 
 Think **Amie, but free and cross-platform**.
 
-## Why MeetLog?
+## Why Frajola?
 
-| Feature | MeetLog | Amie | Jamie | Otter.ai |
+| Feature | Frajola | Amie | Jamie | Otter.ai |
 |---------|---------|------|-------|----------|
 | Price | **Free** | Paid | $24/mo | $16.99/mo |
 | No Meeting Bot | ✅ | ✅ | ✅ | ⚠️ |
@@ -70,8 +72,8 @@ Think **Amie, but free and cross-platform**.
 
 ```bash
 # Clone the repository
-git clone https://github.com/victorlucss/meetlog.git
-cd meetlog
+git clone https://github.com/victorlucss/frajola.git
+cd frajola
 
 # Install dependencies
 npm install

@@ -2,11 +2,11 @@
 
 ## Overview
 
-MeetLog is an Electron-based desktop application that captures audio, generates transcriptions, and produces AI-powered meeting notes.
+Frajola is an Electron-based desktop application that captures audio, generates transcriptions, and produces AI-powered meeting notes.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        MeetLog App                               │
+│                        Frajola App                               │
 ├─────────────────────────────────────────────────────────────────┤
 │  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────┐ │
 │  │   UI (React)    │◄──►│   Main Process   │◄──►│   SQLite    │ │
@@ -40,7 +40,7 @@ MeetLog is an Electron-based desktop application that captures audio, generates 
 ## Project Structure
 
 ```
-meetlog/
+frajola/
 ├── src/
 │   ├── main/                    # Electron main process
 │   │   ├── index.ts             # Entry point

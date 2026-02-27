@@ -34,7 +34,7 @@ The AI meeting notes market is growing rapidly as remote/hybrid work becomes per
 - ❌ Paid product
 - ❌ Closed source
 
-**Our Opportunity:** Bring Amie's UX philosophy to ALL platforms, for FREE.
+**Our Opportunity:** Bring Amie's UX philosophy to ALL platforms, for FREE. That's Frajola.
 
 ---
 
@@ -206,7 +206,7 @@ The AI meeting notes market is growing rapidly as remote/hybrid work becomes per
 
 ## Competitive Matrix
 
-| Feature | MeetLog | **Amie** | Jamie | Otter | Fireflies |
+| Feature | Frajola | **Amie** | Jamie | Otter | Fireflies |
 |---------|---------|----------|-------|-------|-----------|
 | **Price** | Free | Paid | $24+ | $17+ | $18+ |
 | **No Bot** | ✅ | ✅ | ✅ | ⚠️ | ❌ |
@@ -223,7 +223,7 @@ The AI meeting notes market is growing rapidly as remote/hybrid work becomes per
 | **Open Source** | ✅ | ❌ | ❌ | ❌ | ❌ |
 | **Offline** | ✅ | ⚠️ | ✅ | ❌ | ❌ |
 
-## Key Differentiators for MeetLog
+## Key Differentiators for Frajola
 
 ### 1. **100% Free**
 No subscription, no usage limits, no hidden costs. Funded by donations or sponsorships, not user payments.
@@ -257,13 +257,20 @@ Works with ANY meeting platform - Zoom, Meet, Teams, Discord, phone calls, in-pe
                      │
     ─────────────────┼───────────────────────────────
                      │
-    Premium UX       │                    ▣ MeetLog
+    Premium UX       │                    ▣ Frajola
     (Free)           │
                      │
                    macOS-only        Cross-Platform
 ```
 
-**MeetLog fills the gap:** Amie's UX + Free + Cross-Platform
+**Frajola fills the gap:** Amie's UX + Free + Cross-Platform
+
+## Branding
+
+**Name:** Frajola (Brazilian Portuguese name for Sylvester the cat 🐱)  
+**Domain:** frajola.app  
+**Tagline:** "Your meeting sidekick"  
+**Positioning:** The free, cross-platform Amie alternative
 
 ## Go-to-Market Strategy
 
@@ -284,7 +291,7 @@ Focus messaging on:
 - Open source (transparency)
 
 ### Content Strategy
-- Blog posts comparing MeetLog vs competitors
+- Blog posts comparing Frajola vs competitors
 - "How to record meetings privately" guides
 - Video tutorials for each platform
 - GitHub README optimization for discoverability

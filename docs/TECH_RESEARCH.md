@@ -483,8 +483,8 @@ Keep the notes concise and actionable. Focus on what matters.
 
 ```yaml
 # electron-builder.yml
-appId: com.meetlog.app
-productName: MeetLog
+appId: app.frajola.desktop
+productName: Frajola
 copyright: Copyright © 2026
 
 mac:

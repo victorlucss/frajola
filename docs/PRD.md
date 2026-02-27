@@ -2,7 +2,8 @@
 
 ## Overview
 
-**Product Name:** MeetLog  
+**Product Name:** Frajola 🐱  
+**Website:** [frajola.app](https://frajola.app)  
 **Tagline:** Free meeting notes, powered by AI. No bots needed.  
 **Inspiration:** [Amie](https://amie.so) - the elegant AI note taker  
 **Target Launch:** Q2 2026
@@ -33,7 +34,7 @@ Existing alternatives like Fireflies.ai and Otter.ai require intrusive meeting b
 
 ## Solution
 
-MeetLog is a **free, open-source desktop app** that records meetings directly from your computer's audio output, with no bot joining the call. It generates transcripts and AI-powered meeting notes automatically.
+Frajola is a **free, open-source desktop app** that records meetings directly from your computer's audio output, with no bot joining the call. It generates transcripts and AI-powered meeting notes automatically.
 
 ## Target Users
 
@@ -52,7 +53,7 @@ MeetLog is a **free, open-source desktop app** that records meetings directly fr
 
 ## Value Proposition
 
-| For | Who | MeetLog is a | That | Unlike |
+| For | Who | Frajola is a | That | Unlike |
 |-----|-----|--------------|------|--------|
 | Remote professionals | attend many meetings | free meeting recorder | captures and summarizes discussions without intrusive bots | Jamie, Otter.ai, Fireflies |
 
