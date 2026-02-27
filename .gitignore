@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+target/
+gen/
+
+# Database
+*.db
+*.db-journal
+*.db-wal
+
+# Environment
+.env
+.env.*
+
+# AI models
+models/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

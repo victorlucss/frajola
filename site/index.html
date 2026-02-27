@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frajola — The meeting recorder that minds its own business</title>
+  <meta name="description" content="Free meeting recorder with local transcription and AI notes. No bots. No cloud. No creepy data harvesting. Works on macOS, Windows, and Linux.">
+  <link rel="icon" type="image/png" href="../assets/icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/landing.css">
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav class="nav" id="nav">
+    <div class="nav-inner container">
+      <a href="/" class="nav-logo">
+        <img src="../assets/icon.png" alt="" width="28" height="28">
+        <span>Frajola</span>
+      </a>
+      <div class="nav-links" id="nav-links">
+        <a href="#features">Features</a>
+        <a href="#privacy">Privacy</a>
+        <a href="#comparison">Comparison</a>
+        <a href="docs/">Docs</a>
+      </div>
+      <a href="#download" class="nav-cta btn btn-primary btn-sm">Download</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">
+        <span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-waveform fade-up" aria-hidden="true">
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+      </div>
+      <h1 class="hero-title fade-up" data-delay="1">
+        Your meetings.<br>Your machine.<br>None of our business.
+      </h1>
+      <p class="hero-subtitle fade-up" data-delay="2">
+        A meeting recorder that actually respects you. No bots crashing your calls,
+        no audio shipped to some server farm. Everything happens on your computer. Wild concept, right?
+      </p>
+      <div class="hero-actions fade-up" data-delay="3">
+        <a href="#download" class="btn btn-primary btn-lg">Download for free</a>
+        <a href="docs/" class="btn btn-ghost btn-lg">Read the docs</a>
+      </div>
+      <p class="hero-platforms fade-up" data-delay="4">
+        macOS, Windows, and Linux. Because everyone deserves nice things.
+      </p>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="section" id="how-it-works">
+    <div class="container">
+      <p class="section-label fade-up">How it works</p>
+      <p class="section-headline fade-up">Three steps. Zero accounts.</p>
+      <p class="section-subtitle fade-up">No signup forms, no email verification, no "we'll never spam you" lies.</p>
+      <div class="steps-grid">
+        <div class="step-card fade-up" data-delay="1">
+          <div class="step-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+          </div>
+          <div class="step-number">01</div>
+          <h3>Hit record</h3>
+          <p>Grabs your system audio and mic at the same time. Zoom, Meet, Teams, Discord, phone calls, whatever. It just works.</p>
+        </div>
+        <div class="step-card fade-up" data-delay="2">
+          <div class="step-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+          </div>
+          <div class="step-number">02</div>
+          <h3>Get the transcript</h3>
+          <p>AI turns your audio into text right on your machine. Your recording doesn't take a vacation to some data center.</p>
+        </div>
+        <div class="step-card fade-up" data-delay="3">
+          <div class="step-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.912 5.813h6.168l-4.996 3.624 1.912 5.813L12 14.626l-4.996 3.624 1.912-5.813-4.996-3.624h6.168z"/></svg>
+          </div>
+          <div class="step-number">03</div>
+          <h3>Read the summary</h3>
+          <p>AI picks out the key points, action items, and decisions. Like having an assistant, except this one doesn't gossip.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="section" id="features">
+    <div class="container">
+      <p class="section-label fade-up">Features</p>
+      <p class="section-headline fade-up">Everything you need. Nothing sketchy.</p>
+      <p class="section-subtitle fade-up">We built the meeting recorder we wished existed. Then we stopped adding things.</p>
+      <div class="features-grid">
+        <div class="feature-card fade-up" data-delay="1">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <h3>Runs on your machine</h3>
+          <p>Transcription and AI notes happen locally. Your data doesn't leave your computer. Not even a little bit. Not even once.</p>
+        </div>
+        <div class="feature-card fade-up" data-delay="2">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/></svg>
+          </div>
+          <h3>Invisible recording</h3>
+          <p>No awkward bot joining your call. Frajola records from your audio output directly. Colleagues, clients, and your boss? Blissfully unaware.</p>
+        </div>
+        <div class="feature-card fade-up" data-delay="3">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <h3>All three platforms</h3>
+          <p>macOS, Windows, and Linux. Yes, Linux. You're welcome.</p>
+        </div>
+        <div class="feature-card fade-up" data-delay="1">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          </div>
+          <h3>Speaks your language</h3>
+          <p>English and Portuguese out of the box. The transcription engine handles 99+ languages and figures out which one you're speaking. Smart cat.</p>
+        </div>
+        <div class="feature-card fade-up" data-delay="2">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <h3>Never forget anything</h3>
+          <p>Every meeting is searchable. That decision from three weeks ago that nobody remembers? Frajola remembers.</p>
+        </div>
+        <div class="feature-card fade-up" data-delay="3">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <h3>Actually free</h3>
+          <p>Not "free for 14 days" free. Not "free with a catch" free. Free free. No credit card, no trial, no surprise invoice.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Privacy Modes -->
+  <section class="section" id="privacy">
+    <div class="container">
+      <p class="section-label fade-up">Privacy modes</p>
+      <p class="section-headline fade-up">Your data, your rules.</p>
+      <p class="section-subtitle fade-up">Full Local is the default because we think that's how it should be. Want cloud? Sure, but you'll have to ask for it.</p>
+      <div class="privacy-cards">
+        <div class="privacy-card privacy-card--active fade-up" data-delay="1">
+          <div class="privacy-badge">Default</div>
+          <h3>Full Local</h3>
+          <dl>
+            <div>
+              <dt>Transcription</dt>
+              <dd>On your machine</dd>
+            </div>
+            <div>
+              <dt>AI Notes</dt>
+              <dd>On your machine</dd>
+            </div>
+            <div>
+              <dt>Data leaving device</dt>
+              <dd class="highlight-green">Absolutely nothing</dd>
+            </div>
+          </dl>
+        </div>
+        <div class="privacy-card fade-up" data-delay="2">
+          <h3>Hybrid</h3>
+          <dl>
+            <div>
+              <dt>Transcription</dt>
+              <dd>On your machine</dd>
+            </div>
+            <div>
+              <dt>AI Notes</dt>
+              <dd>Cloud AI (your key)</dd>
+            </div>
+            <div>
+              <dt>Data leaving device</dt>
+              <dd class="highlight-yellow">Text transcript only</dd>
+            </div>
+          </dl>
+        </div>
+        <div class="privacy-card fade-up" data-delay="3">
+          <h3>Cloud</h3>
+          <dl>
+            <div>
+              <dt>Transcription</dt>
+              <dd>Cloud API (your key)</dd>
+            </div>
+            <div>
+              <dt>AI Notes</dt>
+              <dd>Cloud AI (your key)</dd>
+            </div>
+            <div>
+              <dt>Data leaving device</dt>
+              <dd class="highlight-red">Audio + transcript</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparison -->
+  <section class="section" id="comparison">
+    <div class="container">
+      <p class="section-label fade-up">Comparison</p>
+      <p class="section-headline fade-up">Let's be honest about the competition.</p>
+      <p class="section-subtitle fade-up">Spoiler: they charge you monthly and send your data to the cloud. How original.</p>
+      <div class="table-wrapper fade-up">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th class="highlight">Frajola</th>
+              <th>Amie</th>
+              <th>Jamie</th>
+              <th>Otter.ai</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Price</td>
+              <td><strong>Free</strong></td>
+              <td>Paid</td>
+              <td>$24/mo</td>
+              <td>$17/mo</td>
+            </tr>
+            <tr>
+              <td>No meeting bot</td>
+              <td class="check">Yes</td>
+              <td class="check">Yes</td>
+              <td class="check">Yes</td>
+              <td class="partial">Kinda</td>
+            </tr>
+            <tr>
+              <td>Windows</td>
+              <td class="check">Yes</td>
+              <td class="cross">Nope</td>
+              <td class="check">Yes</td>
+              <td class="check">Yes</td>
+            </tr>
+            <tr>
+              <td>macOS</td>
+              <td class="check">Yes</td>
+              <td class="check">Yes</td>
+              <td class="check">Yes</td>
+              <td class="check">Yes</td>
+            </tr>
+            <tr>
+              <td>Linux</td>
+              <td class="check">Yes</td>
+              <td class="cross">Nope</td>
+              <td class="cross">Nope</td>
+              <td class="cross">Nope</td>
+            </tr>
+            <tr>
+              <td>Local transcription</td>
+              <td class="check">Yes</td>
+              <td class="cross">Nope</td>
+              <td class="check">Yes</td>
+              <td class="cross">Nope</td>
+            </tr>
+            <tr>
+              <td>Local AI notes</td>
+              <td class="check">Yes</td>
+              <td class="cross">Nope</td>
+              <td class="cross">Nope</td>
+              <td class="cross">Nope</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Download -->
+  <section class="section section--cta" id="download">
+    <div class="container">
+      <p class="section-headline fade-up">Alright, you're convinced.</p>
+      <p class="section-subtitle fade-up">Free download. No account. No credit card. No "just one more step."</p>
+      <div class="download-grid">
+        <a href="#" class="download-card fade-up" data-delay="1">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          <span class="download-platform">macOS</span>
+          <span class="download-ext">.dmg</span>
+        </a>
+        <a href="#" class="download-card fade-up" data-delay="2">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+          <span class="download-platform">Windows</span>
+          <span class="download-ext">.msi</span>
+        </a>
+        <a href="#" class="download-card fade-up" data-delay="3">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.504 0c-.155 0-.311.015-.466.045C9.173.723 8.12 3.576 9.241 6.13c.196.434.49.922.743 1.283-1.298.19-2.85.736-4.277 1.556-2.574 1.478-3.863 3.307-3.874 3.324A4.32 4.32 0 0 0 1 14.583c0 2.456 2.212 4.327 5.178 4.327 1.065 0 2.08-.247 2.97-.63.108.345.234.682.397.998.553 1.076 1.362 1.884 2.455 2.422 1.09.54 2.348.745 3.684.412 1.02-.255 1.81-.782 2.38-1.451.43-.504.704-1.091.9-1.665 1.823.155 3.58-.385 4.887-1.556 1.438-1.286 2.15-3.12 2.15-4.857 0-2.226-1.252-4.33-3.243-5.515-.218-.13-.448-.245-.683-.35.078-.522.078-1.066-.017-1.63C21.66 2.858 19.707.607 17.131.091A5.402 5.402 0 0 0 15.818 0c-1.146 0-2.18.455-3.008 1.182A4.42 4.42 0 0 0 12.504 0z"/></svg>
+          <span class="download-platform">Linux</span>
+          <span class="download-ext">.AppImage</span>
+        </a>
+      </div>
+      <p class="download-note fade-up">
+        Coming soon. Leave your email and we'll let you know when it's ready. Just kidding, we don't collect emails either.
+      </p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <img src="../assets/icon.png" alt="" width="24" height="24">
+        <span>Frajola</span>
+      </div>
+      <nav class="footer-links">
+        <a href="docs/">Docs</a>
+      </nav>
+      <p class="footer-copy">Made in Brazil.</p>
+    </div>
+  </footer>
+
+  <script defer src="js/animations.js"></script>
+  <script defer src="js/nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Docs — Frajola</title>
+  <meta name="description" content="Documentation for Frajola, the privacy-first meeting recorder. Installation, setup, usage, and configuration guides.">
+  <link rel="icon" type="image/jpeg" href="../../assets/icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/docs.css">
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav class="nav" id="nav">
+    <div class="nav-inner container">
+      <a href="../" class="nav-logo">
+        <img src="../../assets/icon.png" alt="" width="28" height="28">
+        <span>Frajola</span>
+      </a>
+      <div class="nav-links" id="nav-links">
+        <a href="../#features">Features</a>
+        <a href="../#privacy">Privacy</a>
+        <a href="./" class="active">Docs</a>
+      </div>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">
+        <span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+
+    <!-- Sidebar -->
+    <aside class="docs-sidebar" id="docs-sidebar">
+      <nav class="docs-nav">
+        <h4>Getting Started</h4>
+        <ul>
+          <li><a href="#overview">Overview</a></li>
+          <li><a href="#quick-start">Quick Start</a></li>
+          <li><a href="#system-requirements">System Requirements</a></li>
+        </ul>
+        <h4>Installation</h4>
+        <ul>
+          <li><a href="#install-frajola">Install Frajola</a></li>
+          <li><a href="#install-ollama">Set Up Ollama</a></li>
+          <li><a href="#whisper-models">Whisper Models</a></li>
+        </ul>
+        <h4>Usage Guide</h4>
+        <ul>
+          <li><a href="#recording">Recording a Meeting</a></li>
+          <li><a href="#transcription">Transcription</a></li>
+          <li><a href="#ai-notes">AI Meeting Notes</a></li>
+          <li><a href="#meeting-library">Meeting Library &amp; Search</a></li>
+          <li><a href="#export">Exporting Notes</a></li>
+        </ul>
+        <h4>Privacy &amp; Security</h4>
+        <ul>
+          <li><a href="#privacy-modes">Privacy Modes</a></li>
+          <li><a href="#data-storage">Where Data Is Stored</a></li>
+          <li><a href="#cloud-opt-in">Cloud APIs (Opt-in)</a></li>
+        </ul>
+        <h4>Configuration</h4>
+        <ul>
+          <li><a href="#settings">Settings Overview</a></li>
+          <li><a href="#ai-providers">AI Providers</a></li>
+          <li><a href="#whisper-config">Whisper Configuration</a></li>
+          <li><a href="#language">Language Settings</a></li>
+        </ul>
+        <h4>Troubleshooting</h4>
+        <ul>
+          <li><a href="#audio-issues">Audio Capture Issues</a></li>
+          <li><a href="#macos-permissions">macOS Permissions</a></li>
+          <li><a href="#linux-audio">Linux Audio</a></li>
+          <li><a href="#ollama-not-found">Ollama Not Detected</a></li>
+          <li><a href="#whisper-slow">Slow Transcription</a></li>
+        </ul>
+        <h4>FAQ</h4>
+        <ul>
+          <li><a href="#faq">Frequently Asked Questions</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Content -->
+    <main class="docs-content">
+
+      <!-- ============ GETTING STARTED ============ -->
+
+      <section id="overview" class="docs-section fade-up">
+        <h2>Overview</h2>
+        <p>Frajola is a free desktop application that records your meetings directly from your computer's audio output and microphone — no bot joins your calls. It transcribes audio locally with <a href="https://github.com/ggerganov/whisper.cpp" target="_blank" rel="noopener">Whisper</a> and generates AI meeting notes with <a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a>. Everything runs on your machine by default.</p>
+
+        <p>Frajola works with <strong>any meeting platform</strong>: Zoom, Google Meet, Teams, Discord, phone calls, or even in-person meetings.</p>
+
+        <h3>Key Features</h3>
+        <ul>
+          <li><strong>Privacy-first</strong> — All audio, transcripts, and summaries stay on your machine by default</li>
+          <li><strong>No bots</strong> — Records from your audio output directly, invisibly</li>
+          <li><strong>Cross-platform</strong> — Windows, macOS, and Linux</li>
+          <li><strong>Local AI</strong> — Transcription via Whisper, notes via Ollama, no cloud needed</li>
+          <li><strong>Meeting library</strong> — Full-text search across all your meetings</li>
+          <li><strong>Export</strong> — Markdown and PDF</li>
+        </ul>
+      </section>
+
+      <section id="quick-start" class="docs-section fade-up">
+        <h2>Quick Start</h2>
+        <p>Get up and running in three steps:</p>
+
+        <h3>1. Download Frajola</h3>
+        <p>Download the installer for your platform from the <a href="../#download">home page</a>.</p>
+
+        <h3>2. Install Ollama (for AI notes)</h3>
+        <p>Frajola uses Ollama for local AI-generated meeting notes. Install it from <a href="https://ollama.com" target="_blank" rel="noopener">ollama.com</a>, then pull a model:</p>
+        <pre><code>ollama pull llama3.2:3b</code></pre>
+        <p>See <a href="#install-ollama">Set Up Ollama</a> for detailed instructions and model recommendations.</p>
+
+        <h3>3. Record your first meeting</h3>
+        <p>Open Frajola, click <strong>Start Recording</strong>, join your meeting, and click <strong>Stop</strong> when done. Frajola will transcribe the audio and generate notes automatically.</p>
+      </section>
+
+      <section id="system-requirements" class="docs-section fade-up">
+        <h2>System Requirements</h2>
+
+        <h3>Supported Operating Systems</h3>
+        <ul>
+          <li><strong>macOS</strong> — 12 (Monterey) or later</li>
+          <li><strong>Windows</strong> — 10 or later</li>
+          <li><strong>Linux</strong> — Ubuntu 20.04+, Fedora 35+, or equivalent (PulseAudio or PipeWire)</li>
+        </ul>
+
+        <h3>Hardware Recommendations</h3>
+        <p>For <strong>local transcription</strong> (Whisper), the following is recommended based on model size:</p>
+        <table>
+          <thead>
+            <tr><th>Model</th><th>RAM Needed</th><th>Speed</th><th>Accuracy</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>tiny</td><td>~75 MB</td><td>Very fast</td><td>Low</td></tr>
+            <tr><td>base (default)</td><td>~142 MB</td><td>Fast</td><td>Good</td></tr>
+            <tr><td>small</td><td>~466 MB</td><td>Medium</td><td>Better</td></tr>
+            <tr><td>medium</td><td>~1.5 GB</td><td>Slow</td><td>Great</td></tr>
+            <tr><td>large-v3</td><td>~3 GB</td><td>Very slow</td><td>Best</td></tr>
+          </tbody>
+        </table>
+        <p>The <code>base</code> model is the default and works well on most machines. Older or low-RAM machines should use <code>tiny</code>.</p>
+
+        <p>For <strong>local AI notes</strong> (Ollama), at least 8 GB of RAM is recommended. The smallest model (Llama 3.2 3B) requires about 2 GB.</p>
+      </section>
+
+      <!-- ============ INSTALLATION ============ -->
+
+      <section id="install-frajola" class="docs-section fade-up">
+        <h2>Install Frajola</h2>
+
+        <h3>Download</h3>
+        <p>Download the latest release for your platform:</p>
+        <ul>
+          <li><strong>macOS</strong> — <code>.dmg</code> installer</li>
+          <li><strong>Windows</strong> — <code>.msi</code> installer</li>
+          <li><strong>Linux</strong> — <code>.AppImage</code> or <code>.deb</code></li>
+        </ul>
+        <p>Installers are available on the <a href="../#download">download page</a>.</p>
+      </section>
+
+      <section id="install-ollama" class="docs-section fade-up">
+        <h2>Set Up Ollama</h2>
+        <p><a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a> is a local AI runtime that Frajola uses to generate meeting notes. It runs models entirely on your machine — no data is sent to the cloud.</p>
+
+        <h3>Install Ollama</h3>
+        <ul>
+          <li><strong>macOS / Linux</strong>: <code>curl -fsSL https://ollama.com/install.sh | sh</code></li>
+          <li><strong>Windows</strong>: Download the installer from <a href="https://ollama.com/download" target="_blank" rel="noopener">ollama.com/download</a></li>
+        </ul>
+
+        <h3>Pull a Model</h3>
+        <p>After installing, pull a model. We recommend starting with <strong>Llama 3.2 3B</strong> — it's small, fast, and produces good summaries:</p>
+        <pre><code>ollama pull llama3.2:3b</code></pre>
+
+        <h3>Verify Ollama is Running</h3>
+        <p>Ollama runs as a background service on port <code>11434</code>. You can verify it's working with:</p>
+        <pre><code>curl http://localhost:11434/api/tags</code></pre>
+        <p>You should see a JSON response listing your installed models.</p>
+
+        <h3>Recommended Models</h3>
+        <table>
+          <thead>
+            <tr><th>Model</th><th>Size</th><th>Speed</th><th>Quality</th><th>Best For</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Llama 3.2 3B</td><td>2 GB</td><td>Fast</td><td>Good</td><td>Quick summaries, low-RAM machines</td></tr>
+            <tr><td>Mistral 7B</td><td>4 GB</td><td>Medium</td><td>Better</td><td>Detailed meeting notes</td></tr>
+            <tr><td>Llama 3.1 8B</td><td>5 GB</td><td>Medium</td><td>Great</td><td>Best local quality</td></tr>
+            <tr><td>Qwen 2.5 7B</td><td>4 GB</td><td>Medium</td><td>Great</td><td>Multilingual (English + Portuguese)</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout">
+          <p><strong>Tip:</strong> If you have 16 GB of RAM or more, try Llama 3.1 8B for the best quality. On 8 GB machines, Llama 3.2 3B is the safest choice.</p>
+        </div>
+
+        <p>You can change the model at any time in Frajola's <a href="#ai-providers">settings</a>.</p>
+      </section>
+
+      <section id="whisper-models" class="docs-section fade-up">
+        <h2>Whisper Models</h2>
+        <p>Frajola uses <a href="https://github.com/ggerganov/whisper.cpp" target="_blank" rel="noopener">whisper.cpp</a> (via <a href="https://github.com/tazz4843/whisper-rs" target="_blank" rel="noopener">whisper-rs</a>) for local audio transcription. Whisper supports over 99 languages and automatically detects the language being spoken.</p>
+
+        <h3>Available Models</h3>
+        <table>
+          <thead>
+            <tr><th>Model</th><th>Download Size</th><th>Speed (relative)</th><th>Accuracy</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>tiny</td><td>75 MB</td><td>~32x real-time</td><td>Low</td></tr>
+            <tr><td>base (default)</td><td>142 MB</td><td>~16x real-time</td><td>Good</td></tr>
+            <tr><td>small</td><td>466 MB</td><td>~6x real-time</td><td>Better</td></tr>
+            <tr><td>medium</td><td>1.5 GB</td><td>~2x real-time</td><td>Great</td></tr>
+            <tr><td>large-v3</td><td>3 GB</td><td>~1x real-time</td><td>Best</td></tr>
+          </tbody>
+        </table>
+        <p>The <strong>speed</strong> column shows approximately how much faster than real-time each model processes audio on modern hardware. For example, <code>base</code> at 16x real-time means a 1-hour meeting would take about 4 minutes to transcribe.</p>
+
+        <div class="callout">
+          <p><strong>Recommendation:</strong> Start with <code>base</code>. If transcription quality is not sufficient for your language or use case, try <code>small</code>. Only use <code>medium</code> or <code>large-v3</code> if you need maximum accuracy and don't mind waiting longer.</p>
+        </div>
+
+        <p>You can change the Whisper model in <a href="#whisper-config">settings</a>. The model is downloaded automatically when first used.</p>
+      </section>
+
+      <!-- ============ USAGE GUIDE ============ -->
+
+      <section id="recording" class="docs-section fade-up">
+        <h2>Recording a Meeting</h2>
+        <p>Frajola records audio from two sources simultaneously:</p>
+        <ul>
+          <li><strong>System audio</strong> — What other participants are saying (the meeting output)</li>
+          <li><strong>Microphone</strong> — Your own voice</li>
+        </ul>
+
+        <h3>How to Record</h3>
+        <ol>
+          <li>Open Frajola</li>
+          <li>Click <strong>Start Recording</strong></li>
+          <li>Join or start your meeting in any app (Zoom, Meet, Teams, etc.)</li>
+          <li>Use <strong>Pause</strong> / <strong>Resume</strong> as needed</li>
+          <li>Click <strong>Stop Recording</strong> when done</li>
+        </ol>
+
+        <p>Recording captures audio in WAV format (16-bit PCM, 16kHz mono) optimized for Whisper compatibility. A 1-hour meeting is approximately 115 MB.</p>
+
+        <div class="callout">
+          <p><strong>Note:</strong> Frajola records from your system's audio output — no bot joins the call. Other participants cannot see or detect the recording.</p>
+        </div>
+      </section>
+
+      <section id="transcription" class="docs-section fade-up">
+        <h2>Transcription</h2>
+        <p>After recording stops, Frajola automatically transcribes the audio. Depending on your <a href="#privacy-modes">privacy mode</a>, this happens either locally (via Whisper) or via a cloud API.</p>
+
+        <h3>How It Works</h3>
+        <ul>
+          <li><strong>Local mode (default)</strong> — Whisper runs on your machine. No audio data leaves your device.</li>
+          <li><strong>Cloud mode</strong> — Audio is sent to the OpenAI Whisper API for transcription. Requires an API key.</li>
+        </ul>
+
+        <p>Whisper automatically detects the language being spoken. You can also set a preferred language in <a href="#language">settings</a> for more reliable detection.</p>
+
+        <h3>Speaker Detection</h3>
+        <p>The current version uses <strong>basic voice activity detection (VAD)</strong> — silence gaps longer than 2 seconds are treated as potential speaker changes. This is a simple heuristic and may mislabel speakers in fast-paced conversations.</p>
+
+        <div class="callout--warning callout">
+          <p><strong>Limitation:</strong> True speaker diarization (identifying who said what) requires ML models and is planned for a future version. The current approach works best in 1-on-1 meetings or when speakers take clear turns.</p>
+        </div>
+      </section>
+
+      <section id="ai-notes" class="docs-section fade-up">
+        <h2>AI Meeting Notes</h2>
+        <p>After transcription, Frajola generates structured meeting notes using AI. The output includes:</p>
+        <ul>
+          <li><strong>Summary</strong> — A concise overview of the meeting</li>
+          <li><strong>Key Points</strong> — The most important topics discussed</li>
+          <li><strong>Action Items</strong> — Tasks and follow-ups mentioned, with assignees when identified</li>
+          <li><strong>Decisions</strong> — Decisions that were made during the meeting</li>
+        </ul>
+
+        <h3>AI Providers</h3>
+        <ul>
+          <li><strong>Ollama (default)</strong> — Runs locally, free, no data leaves your device</li>
+          <li><strong>OpenAI (opt-in)</strong> — Uses GPT models via API, requires your own key</li>
+          <li><strong>Anthropic (opt-in)</strong> — Uses Claude models via API, requires your own key</li>
+        </ul>
+
+        <p>The AI prompt includes the full transcript and requests structured output in the language of the meeting. See <a href="#ai-providers">AI Providers</a> to configure.</p>
+      </section>
+
+      <section id="meeting-library" class="docs-section fade-up">
+        <h2>Meeting Library &amp; Search</h2>
+        <p>All your meetings are saved in a local SQLite database with <strong>full-text search</strong> powered by FTS5. You can:</p>
+        <ul>
+          <li>Browse all past meetings sorted by date</li>
+          <li>Search across titles and transcript content</li>
+          <li>View the full transcript with timestamps</li>
+          <li>Review AI-generated notes and action items</li>
+          <li>Delete meetings (removes audio file and all associated data)</li>
+        </ul>
+        <p>Search is fast even with hundreds of meetings — FTS5 indexes are updated automatically as new transcripts are saved.</p>
+      </section>
+
+      <section id="export" class="docs-section fade-up">
+        <h2>Exporting Notes</h2>
+        <p>You can export meeting notes in multiple formats:</p>
+        <ul>
+          <li><strong>Markdown</strong> — Copy to clipboard or save as <code>.md</code> file</li>
+          <li><strong>PDF</strong> — Formatted document ready to share</li>
+        </ul>
+        <p>The export includes the meeting summary, key points, action items, and decisions. You can also copy the raw transcript.</p>
+      </section>
+
+      <!-- ============ PRIVACY & SECURITY ============ -->
+
+      <section id="privacy-modes" class="docs-section fade-up">
+        <h2>Privacy Modes</h2>
+        <p>Frajola offers three privacy modes. You can switch between them at any time in settings.</p>
+
+        <table>
+          <thead>
+            <tr><th>Mode</th><th>Transcription</th><th>AI Notes</th><th>Data Leaving Device</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Full Local (default)</strong></td>
+              <td>whisper-rs</td>
+              <td>Ollama</td>
+              <td>None</td>
+            </tr>
+            <tr>
+              <td>Hybrid</td>
+              <td>whisper-rs</td>
+              <td>GPT / Claude API</td>
+              <td>Transcript text only</td>
+            </tr>
+            <tr>
+              <td>Cloud</td>
+              <td>Whisper API</td>
+              <td>GPT / Claude API</td>
+              <td>Audio + transcript</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout">
+          <p><strong>Full Local is the default.</strong> No data ever leaves your machine unless you explicitly switch to Hybrid or Cloud mode and provide your own API keys.</p>
+        </div>
+
+        <h3>What Each Mode Means</h3>
+        <ul>
+          <li><strong>Full Local</strong> — Whisper transcribes audio on your CPU. Ollama generates notes locally. Zero network requests. This is the most private option.</li>
+          <li><strong>Hybrid</strong> — Transcription still happens locally (audio stays on device), but the resulting text transcript is sent to OpenAI or Anthropic for AI notes. Useful if Ollama quality is not sufficient or your machine can't run large models.</li>
+          <li><strong>Cloud</strong> — Both audio and transcript are sent to cloud APIs. Fastest and highest quality, but least private. Your own API keys are always used — Frajola never proxies through its own servers.</li>
+        </ul>
+      </section>
+
+      <section id="data-storage" class="docs-section fade-up">
+        <h2>Where Data Is Stored</h2>
+        <p>All Frajola data is stored locally on your machine:</p>
+        <ul>
+          <li><strong>Database</strong> — SQLite file in your OS app data directory (<code>frajola.db</code>)</li>
+          <li><strong>Audio files</strong> — WAV files on local disk</li>
+          <li><strong>Settings</strong> — Stored in the same SQLite database</li>
+        </ul>
+
+        <h3>Data Locations</h3>
+        <table>
+          <thead>
+            <tr><th>Platform</th><th>App Data Directory</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>macOS</td><td><code>~/Library/Application Support/app.frajola.desktop/</code></td></tr>
+            <tr><td>Windows</td><td><code>%APPDATA%\app.frajola.desktop\</code></td></tr>
+            <tr><td>Linux</td><td><code>~/.local/share/app.frajola.desktop/</code></td></tr>
+          </tbody>
+        </table>
+
+        <h3>No Telemetry</h3>
+        <p>Frajola collects <strong>zero telemetry</strong>. No analytics, no tracking, no phone-home. The app never connects to any server unless you explicitly enable cloud APIs.</p>
+
+        <h3>Deleting Data</h3>
+        <p>Deleting a meeting from the library removes its audio file and all associated database rows (transcript, notes, action items) via cascading deletes. To remove all data, delete the app data directory listed above.</p>
+      </section>
+
+      <section id="cloud-opt-in" class="docs-section fade-up">
+        <h2>Cloud APIs (Opt-in)</h2>
+        <p>Cloud APIs are <strong>never enabled by default</strong>. To use them:</p>
+        <ol>
+          <li>Switch your privacy mode to <strong>Hybrid</strong> or <strong>Cloud</strong> in settings</li>
+          <li>Enter your own API key for the provider you want to use</li>
+        </ol>
+
+        <h3>Supported Providers</h3>
+        <ul>
+          <li><strong>OpenAI</strong> — Whisper API for transcription, GPT models for notes</li>
+          <li><strong>Anthropic</strong> — Claude models for notes</li>
+        </ul>
+
+        <p>API keys are stored securely on your machine. Frajola sends requests directly to the provider — there is no Frajola server in between.</p>
+
+        <h3>Cost Estimates</h3>
+        <table>
+          <thead>
+            <tr><th>Service</th><th>Cost</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Whisper API</td><td>~$0.006/min</td><td>1-hour meeting ≈ $0.36</td></tr>
+            <tr><td>GPT-4o-mini</td><td>~$0.002/meeting</td><td>Based on average transcript length</td></tr>
+            <tr><td>Claude Haiku</td><td>~$0.001/meeting</td><td>Most cost-effective for notes</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ============ CONFIGURATION ============ -->
+
+      <section id="settings" class="docs-section fade-up">
+        <h2>Settings Overview</h2>
+        <p>Frajola stores configuration as key-value pairs in the local SQLite database. These are the default settings:</p>
+
+        <table>
+          <thead>
+            <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>privacy_mode</code></td><td><code>local</code></td><td>Privacy mode: <code>local</code>, <code>hybrid</code>, or <code>cloud</code></td></tr>
+            <tr><td><code>transcription_mode</code></td><td><code>local</code></td><td>Transcription engine: <code>local</code> (Whisper) or <code>api</code> (OpenAI)</td></tr>
+            <tr><td><code>ai_provider</code></td><td><code>ollama</code></td><td>AI provider: <code>ollama</code>, <code>openai</code>, or <code>anthropic</code></td></tr>
+            <tr><td><code>ai_model</code></td><td><code>llama3.2</code></td><td>Model name for the chosen AI provider</td></tr>
+            <tr><td><code>language</code></td><td><code>en</code></td><td>UI language: <code>en</code> or <code>pt-BR</code></td></tr>
+            <tr><td><code>whisper_model</code></td><td><code>base</code></td><td>Whisper model size: <code>tiny</code>, <code>base</code>, <code>small</code>, <code>medium</code>, <code>large-v3</code></td></tr>
+            <tr><td><code>theme</code></td><td><code>system</code></td><td>UI theme: <code>light</code>, <code>dark</code>, or <code>system</code></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="ai-providers" class="docs-section fade-up">
+        <h2>AI Providers</h2>
+
+        <h3>Ollama (Default)</h3>
+        <p>Ollama runs AI models locally on your machine. It's free and private. See <a href="#install-ollama">Set Up Ollama</a> for installation instructions.</p>
+        <p>To change the Ollama model, update the <code>ai_model</code> setting. Make sure the model is pulled first:</p>
+        <pre><code>ollama pull mistral:7b</code></pre>
+
+        <h3>OpenAI</h3>
+        <p>To use OpenAI, switch your privacy mode to <strong>Hybrid</strong> or <strong>Cloud</strong>, set <code>ai_provider</code> to <code>openai</code>, and enter your API key. Get a key from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>.</p>
+        <p>Recommended models: <code>gpt-4o-mini</code> (fast, cheap), <code>gpt-4o</code> (highest quality).</p>
+
+        <h3>Anthropic</h3>
+        <p>To use Anthropic, switch your privacy mode to <strong>Hybrid</strong> or <strong>Cloud</strong>, set <code>ai_provider</code> to <code>anthropic</code>, and enter your API key. Get a key from <a href="https://console.anthropic.com/" target="_blank" rel="noopener">console.anthropic.com</a>.</p>
+        <p>Recommended models: <code>claude-haiku-4-5-20251001</code> (fast, cheap), <code>claude-sonnet-4-6</code> (highest quality).</p>
+      </section>
+
+      <section id="whisper-config" class="docs-section fade-up">
+        <h2>Whisper Configuration</h2>
+        <p>The <code>whisper_model</code> setting controls which Whisper model is used for local transcription. Models are downloaded automatically when first used.</p>
+
+        <h3>Choosing a Model</h3>
+        <ul>
+          <li><strong>tiny</strong> — Fastest, lowest accuracy. Good for quick notes when exact words don't matter.</li>
+          <li><strong>base</strong> — Default. Good balance of speed and accuracy for most languages.</li>
+          <li><strong>small</strong> — Noticeably better accuracy, especially for non-English languages. 3x slower than base.</li>
+          <li><strong>medium</strong> — High accuracy. Recommended if you need reliable transcription and don't mind waiting.</li>
+          <li><strong>large-v3</strong> — Best accuracy. Only recommended for machines with 8+ GB RAM and when quality is critical.</li>
+        </ul>
+
+        <p>For more details about Whisper models, see the <a href="https://github.com/openai/whisper" target="_blank" rel="noopener">official Whisper documentation</a>.</p>
+      </section>
+
+      <section id="language" class="docs-section fade-up">
+        <h2>Language Settings</h2>
+
+        <h3>UI Language</h3>
+        <p>Frajola supports English (<code>en</code>) and Brazilian Portuguese (<code>pt-BR</code>). Change the <code>language</code> setting to switch the interface language.</p>
+
+        <h3>Meeting Language</h3>
+        <p>Whisper automatically detects the language being spoken in a recording. You can also set a preferred language per meeting for more reliable detection.</p>
+        <p>AI-generated notes are produced in the same language as the meeting. If the transcript is in Portuguese, the summary will also be in Portuguese.</p>
+      </section>
+
+      <!-- ============ TROUBLESHOOTING ============ -->
+
+      <section id="audio-issues" class="docs-section fade-up">
+        <h2>Audio Capture Issues</h2>
+        <p>If Frajola is not capturing audio correctly:</p>
+        <ol>
+          <li><strong>Check your audio device</strong> — Make sure the correct input/output devices are selected in your OS sound settings</li>
+          <li><strong>Restart Frajola</strong> — Audio device handles can become stale if devices change</li>
+          <li><strong>Check volume levels</strong> — Ensure your system audio output is not muted</li>
+          <li><strong>Close conflicting apps</strong> — Some audio apps may hold exclusive access to devices</li>
+        </ol>
+        <p>For platform-specific issues, see the sections below.</p>
+      </section>
+
+      <section id="macos-permissions" class="docs-section fade-up">
+        <h2>macOS Permissions</h2>
+        <p>On macOS, Frajola requires two permissions to capture audio:</p>
+        <ul>
+          <li><strong>Screen &amp; System Audio Recording</strong> — Required to capture system audio output (meeting audio). This uses ScreenCaptureKit under the hood.</li>
+          <li><strong>Microphone</strong> — Required to capture your voice</li>
+        </ul>
+
+        <h3>Granting Permissions</h3>
+        <ol>
+          <li>Open <strong>System Settings</strong> &gt; <strong>Privacy &amp; Security</strong></li>
+          <li>Find <strong>Screen &amp; System Audio Recording</strong> and enable Frajola</li>
+          <li>Find <strong>Microphone</strong> and enable Frajola</li>
+          <li><strong>Restart Frajola</strong> — Permissions take effect after restarting the app</li>
+        </ol>
+
+        <div class="callout--warning callout">
+          <p><strong>Important:</strong> macOS requires you to restart the app after granting audio permissions. If recording doesn't work after enabling permissions, quit and reopen Frajola.</p>
+        </div>
+      </section>
+
+      <section id="linux-audio" class="docs-section fade-up">
+        <h2>Linux Audio</h2>
+        <p>On Linux, Frajola uses PulseAudio or PipeWire (with PulseAudio compatibility) to capture audio.</p>
+
+        <h3>System Audio Capture</h3>
+        <p>To capture system audio (what other meeting participants are saying), Frajola uses a <strong>monitor source</strong>. You can list available sources with:</p>
+        <pre><code>pactl list sources short</code></pre>
+        <p>Look for a source ending in <code>.monitor</code> — this captures the output of your speakers/headphones.</p>
+
+        <h3>PipeWire Users</h3>
+        <p>If you're using PipeWire (default on Fedora 35+ and Ubuntu 22.10+), make sure the PulseAudio compatibility layer is installed:</p>
+        <pre><code># Fedora
+sudo dnf install pipewire-pulseaudio
+
+# Ubuntu/Debian
+sudo apt install pipewire-pulse</code></pre>
+
+        <h3>Common Issues</h3>
+        <ul>
+          <li><strong>No monitor source</strong> — Some audio setups don't expose a monitor source by default. You may need to load the PulseAudio module: <code>pactl load-module module-loopback</code></li>
+          <li><strong>Permission denied</strong> — Make sure your user is in the <code>audio</code> group: <code>sudo usermod -aG audio $USER</code></li>
+        </ul>
+      </section>
+
+      <section id="ollama-not-found" class="docs-section fade-up">
+        <h2>Ollama Not Detected</h2>
+        <p>If Frajola can't connect to Ollama:</p>
+
+        <h3>Check that Ollama is Running</h3>
+        <pre><code># Start Ollama manually
+ollama serve
+
+# Verify it's responding
+curl http://localhost:11434/api/tags</code></pre>
+        <p>If the curl command returns a connection error, Ollama is not running.</p>
+
+        <h3>Common Issues</h3>
+        <ul>
+          <li><strong>Ollama not installed</strong> — Install from <a href="https://ollama.com" target="_blank" rel="noopener">ollama.com</a></li>
+          <li><strong>Port conflict</strong> — Another service may be using port 11434. Check with <code>lsof -i :11434</code> (macOS/Linux) or <code>netstat -an | find "11434"</code> (Windows)</li>
+          <li><strong>No models pulled</strong> — Run <code>ollama pull llama3.2:3b</code> to download a model</li>
+          <li><strong>Firewall blocking</strong> — Ensure localhost connections are allowed on port 11434</li>
+        </ul>
+
+        <div class="callout">
+          <p><strong>Alternative:</strong> If you can't run Ollama, switch to <strong>Hybrid</strong> or <strong>Cloud</strong> mode in settings to use OpenAI or Anthropic instead.</p>
+        </div>
+      </section>
+
+      <section id="whisper-slow" class="docs-section fade-up">
+        <h2>Slow Transcription</h2>
+        <p>If local transcription is taking too long:</p>
+        <ul>
+          <li><strong>Use a smaller model</strong> — Switch from <code>base</code> to <code>tiny</code> in settings for faster (but less accurate) transcription</li>
+          <li><strong>Close resource-heavy apps</strong> — Whisper uses significant CPU. Close other demanding applications during transcription</li>
+          <li><strong>Use cloud transcription</strong> — Switch to <strong>Cloud</strong> mode to use the OpenAI Whisper API, which transcribes a 1-hour meeting in about 30 seconds</li>
+        </ul>
+
+        <h3>Expected Performance</h3>
+        <table>
+          <thead>
+            <tr><th>Model</th><th>1-Hour Meeting</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>tiny</td><td>~2 minutes</td></tr>
+            <tr><td>base</td><td>~4 minutes</td></tr>
+            <tr><td>small</td><td>~10 minutes</td></tr>
+            <tr><td>medium</td><td>~30 minutes</td></tr>
+            <tr><td>large-v3</td><td>~60 minutes</td></tr>
+          </tbody>
+        </table>
+        <p>These times are approximate and depend on your hardware. Apple Silicon Macs tend to be faster than x86 for Whisper inference.</p>
+      </section>
+
+      <!-- ============ FAQ ============ -->
+
+      <section id="faq" class="docs-section fade-up">
+        <h2>Frequently Asked Questions</h2>
+
+        <h3>Is Frajola really free?</h3>
+        <p>Yes. Frajola is completely free. There are no paid plans, no usage limits, and no hidden costs. If you use cloud APIs (OpenAI/Anthropic), you pay those providers directly using your own API keys.</p>
+
+        <h3>Does anyone know I'm recording?</h3>
+        <p>No. Frajola records by capturing your system's audio output — it does not join the meeting as a participant. Other participants cannot see or detect the recording. Please check your local laws regarding recording consent.</p>
+
+        <h3>What if I don't have Ollama installed?</h3>
+        <p>Without Ollama, Frajola can still record and transcribe meetings using Whisper. For AI-generated notes, you can either install Ollama (see <a href="#install-ollama">setup guide</a>) or switch to a cloud AI provider in settings.</p>
+
+        <h3>Can I use my own OpenAI or Anthropic API key?</h3>
+        <p>Yes. Switch your privacy mode to <strong>Hybrid</strong> or <strong>Cloud</strong>, select your preferred provider, and enter your API key in settings. Frajola sends requests directly to the provider — there is no intermediary.</p>
+
+        <h3>What languages are supported?</h3>
+        <p>The <strong>UI</strong> supports English and Brazilian Portuguese. <strong>Transcription</strong> (via Whisper) supports 99+ languages with automatic language detection. <strong>AI notes</strong> are generated in the same language as the transcript.</p>
+
+        <h3>How much disk space does a recording use?</h3>
+        <p>Approximately <strong>115 MB per hour</strong> of recording (WAV, 16-bit PCM, 16kHz mono). OPUS audio compression is planned for a future release, which would reduce this to approximately 10-15 MB per hour.</p>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Mobile sidebar toggle -->
+  <button class="docs-mobile-toggle" id="docs-sidebar-toggle" aria-label="Toggle documentation menu">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <img src="../../assets/icon.png" alt="" width="24" height="24">
+        <span>Frajola</span>
+      </div>
+      <nav class="footer-links">
+        <a href="../">Home</a>
+        <a href="./">Docs</a>
+      </nav>
+      <p class="footer-copy">Made in Brazil.</p>
+    </div>
+  </footer>
+
+  <script defer src="../js/animations.js"></script>
+  <script defer src="../js/nav.js"></script>
+  <script defer src="../js/docs-nav.js"></script>
+</body>
+</html>

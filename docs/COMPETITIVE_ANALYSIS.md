@@ -4,37 +4,42 @@
 
 The AI meeting notes market is growing rapidly as remote/hybrid work becomes permanent. Key players have raised significant funding and the market is estimated at $2B+ by 2025.
 
+## Positioning
+
+**Frajola's position:** Privacy-first meeting recorder for technical users.
+
+We are not trying to be "the free Amie." We serve a different audience — developers, engineers, and privacy-conscious professionals who want local-first processing, Linux support, and open-source transparency. The overlap with Amie is the "no bot" UX, not the target market.
+
 ## Direct Competitors
 
-### 1. Amie (amie.so) ⭐ PRIMARY INSPIRATION
+### 1. Amie (amie.so) — PRIMARY INSPIRATION (UX only)
 
 **What they do:** Elegant AI note taker with macOS notch integration, AI chat, and smart integrations.
 
 **Key Features:**
-- 🎯 Notch UI on macOS - beautiful, non-intrusive
-- ⏸️ Pause/resume recording (speak "off the record")
-- 🤖 AI Chat - ask questions about ANY past meeting
-- 📧 Email drafts in your writing style
-- 🔗 Integrations: Hubspot, Pipedrive, Notion, Slack, Linear
-- 📄 Shareable pages for clients/team
-- 🎤 Speaker memory - remembers names across meetings
-- 📅 Calendar integration - auto-record scheduled meetings
+- Notch UI on macOS — beautiful, non-intrusive
+- Pause/resume recording (speak "off the record")
+- AI Chat — ask questions about any past meeting
+- Email drafts in your writing style
+- Integrations: Hubspot, Pipedrive, Notion, Slack, Linear
+- Speaker memory — remembers names across meetings
+- Calendar integration — auto-record scheduled meetings
 
-**Pricing:** Paid (pricing not public on website)
+**Pricing:** Paid (pricing not public)
 
 **Strengths:**
-- ✅ Exceptional UX and design
-- ✅ No meeting bot
-- ✅ Context-aware AI (knows your business)
-- ✅ Full workflow automation (not just transcription)
-- ✅ Shareable meeting pages
+- Exceptional UX and design
+- No meeting bot
+- Context-aware AI (knows your business)
+- Full workflow automation
 
 **Weaknesses:**
-- ❌ macOS only (no Windows, no Linux)
-- ❌ Paid product
-- ❌ Closed source
+- macOS only
+- Paid, closed source
+- Cloud-only processing
 
-**Our Opportunity:** Bring Amie's UX philosophy to ALL platforms, for FREE. That's Frajola.
+**What we take from Amie:** The "no bot" approach and clean UX.
+**What we don't take:** The premium/cloud-only positioning.
 
 ---
 
@@ -42,256 +47,157 @@ The AI meeting notes market is growing rapidly as remote/hybrid work becomes per
 
 **What they do:** Bot-free AI meeting assistant that captures system audio directly.
 
-**Pricing:**
-- Starter: $24/month (10 meetings)
-- Pro: $49/month (50 meetings)
-- Executive: $99/month (unlimited)
+**Pricing:** $24-99/month
 
 **Strengths:**
-- ✅ No meeting bot - captures system audio directly
-- ✅ Works offline
-- ✅ High-quality AI summaries
-- ✅ Executive Assistant sidebar feature
-- ✅ Multiple AI models (Jamie, ChatGPT, Claude)
+- No meeting bot
+- Works offline
+- High-quality AI summaries
 
 **Weaknesses:**
-- ❌ Expensive ($24-99/month)
-- ❌ No Linux support
-- ❌ Closed source
-- ❌ Free tier very limited
-
-**Our Opportunity:** Free + Linux support + open source
+- Expensive ($24-99/month)
+- No Linux support
+- Closed source
 
 ---
 
-### 2. Otter.ai
+### 3. Otter.ai
 
-**What they do:** AI meeting transcription and notes with both bot and bot-free options.
+**What they do:** AI meeting transcription with both bot and bot-free options.
 
-**Pricing:**
-- Basic: Free (300 min/month)
-- Pro: $16.99/month
-- Business: $30/month
+**Pricing:** Free (300 min/month) to $30/month
 
 **Strengths:**
-- ✅ Strong free tier
-- ✅ Real-time transcription
-- ✅ Good accuracy
-- ✅ Mobile app
-- ✅ Calendar integration
+- Strong free tier
+- Real-time transcription
+- Good accuracy
 
 **Weaknesses:**
-- ❌ Bot-based recording is default (invasive)
-- ❌ Desktop app less polished
-- ❌ No Linux support
-- ❌ Limited offline capability
-
-**Our Opportunity:** Better bot-free experience, Linux, fully offline
+- Bot-based recording is default
+- No Linux support
+- Limited offline capability
 
 ---
 
-### 3. Fireflies.ai
+### 4. Fireflies.ai
 
-**What they do:** AI meeting assistant that joins calls as a bot participant.
+**What they do:** AI meeting assistant that joins calls as a bot.
 
-**Pricing:**
-- Free: 800 min storage
-- Pro: $18/month
-- Business: $29/month
+**Pricing:** Free (800 min storage) to $29/month
 
 **Strengths:**
-- ✅ Excellent CRM integrations
-- ✅ Good search across meetings
-- ✅ Team collaboration features
-- ✅ Chrome extension
+- Excellent CRM integrations
+- Good cross-meeting search
 
 **Weaknesses:**
-- ❌ REQUIRES a bot in meetings (no bot-free option)
-- ❌ Many platforms block/detect the bot
-- ❌ Privacy concerns with bot
-- ❌ No desktop app
-
-**Our Opportunity:** No bot at all, privacy-first
+- Requires a bot (no bot-free option)
+- No desktop app
+- Privacy concerns
 
 ---
 
-### 4. Fathom
+### 5. Fathom
 
-**What they do:** Free AI meeting recorder focused on Zoom/Meet/Teams.
+**What they do:** Free AI meeting recorder for Zoom/Meet/Teams.
 
-**Pricing:**
-- Free tier is generous
-- Team: $19/user/month
+**Pricing:** Free to $19/user/month
 
 **Strengths:**
-- ✅ Generous free tier
-- ✅ Good Zoom integration
-- ✅ CRM sync (HubSpot, Salesforce)
-- ✅ Clip sharing
+- Generous free tier
+- Good Zoom integration
 
 **Weaknesses:**
-- ❌ Bot-based (joins meetings)
-- ❌ Limited platform support
-- ❌ No offline mode
-- ❌ No Linux
-
-**Our Opportunity:** Bot-free, works anywhere
-
----
-
-### 5. Krisp
-
-**What they do:** Noise cancellation app with transcription add-on.
-
-**Pricing:**
-- Free: 60 min/day noise cancellation
-- Pro: $8/month (noise) + $8/month (transcription)
-
-**Strengths:**
-- ✅ Excellent noise cancellation
-- ✅ Works system-wide
-- ✅ Lightweight
-
-**Weaknesses:**
-- ❌ Transcription is add-on feature, not core focus
-- ❌ Limited AI note capabilities
-- ❌ No speaker diarization in free tier
-
-**Our Opportunity:** Full-featured notes, not just transcription
-
----
-
-### 6. Notion AI Meeting Notes
-
-**What they do:** Built-in meeting recording in Notion app.
-
-**Pricing:**
-- Requires Notion Plus ($10/month) + AI add-on ($8/month)
-
-**Strengths:**
-- ✅ Deep Notion integration
-- ✅ Captures system audio (no bot)
-- ✅ Inline in your notes
-
-**Weaknesses:**
-- ❌ Only for Notion users
-- ❌ Expensive (requires Notion subscription)
-- ❌ Limited to Notion ecosystem
-
-**Our Opportunity:** Standalone, works with any workflow
-
----
-
-### 7. ChatGPT Record (OpenAI)
-
-**What they do:** Record and transcribe directly in ChatGPT desktop app.
-
-**Pricing:**
-- Requires ChatGPT Plus ($20/month) or Pro ($200/month)
-
-**Strengths:**
-- ✅ Built into ChatGPT
-- ✅ Good transcription quality
-- ✅ Can ask questions about recording
-
-**Weaknesses:**
-- ❌ macOS only
-- ❌ Expensive (requires ChatGPT Plus)
-- ❌ Not purpose-built for meetings
-- ❌ No meeting library or organization
-
-**Our Opportunity:** Cross-platform, free, purpose-built
+- Bot-based
+- No offline mode
+- No Linux
 
 ---
 
 ## Competitive Matrix
 
-| Feature | Frajola | **Amie** | Jamie | Otter | Fireflies |
-|---------|---------|----------|-------|-------|-----------|
-| **Price** | Free | Paid | $24+ | $17+ | $18+ |
-| **No Bot** | ✅ | ✅ | ✅ | ⚠️ | ❌ |
-| **Windows** | ✅ | ❌ | ✅ | ✅ | ✅ |
-| **macOS** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Linux** | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Floating UI** | ✅ | ✅ (notch) | ❌ | ❌ | ❌ |
-| **Pause/Resume** | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **AI Chat** | ✅ (v2) | ✅ | ❌ | ⚠️ | ⚠️ |
-| **Speaker Memory** | ✅ (v2) | ✅ | ❌ | ❌ | ❌ |
-| **Shareable Pages** | ✅ (v2) | ✅ | ❌ | ❌ | ❌ |
-| **Email Drafts** | ❌ | ✅ | ❌ | ❌ | ❌ |
-| **Integrations** | ✅ (v3) | ✅ | ⚠️ | ✅ | ✅ |
-| **Open Source** | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Offline** | ✅ | ⚠️ | ✅ | ❌ | ❌ |
+| Feature | Frajola (MVP) | Frajola (Planned) | Amie | Jamie | Otter |
+|---------|---------------|-------------------|------|-------|-------|
+| **Price** | Free | Free | Paid | $24+ | $17+ |
+| **No Bot** | Yes | Yes | Yes | Yes | Partial |
+| **Windows** | Yes | Yes | No | Yes | Yes |
+| **macOS** | Yes | Yes | Yes | Yes | Yes |
+| **Linux** | Yes | Yes | No | No | No |
+| **Local Transcription** | Yes | Yes | No | Yes | No |
+| **Local AI** | Yes (Ollama) | Yes | No | No | No |
+| **Speaker Detection** | Basic (VAD) | ML-based (v2) | Yes | Yes | Yes |
+| **AI Chat** | No | v2 | Yes | No | Partial |
+| **Calendar** | No | v2 | Yes | No | Yes |
+| **Integrations** | No | v3 | Yes | Partial | Yes |
+| **Open Source** | Yes | Yes | No | No | No |
+| **Fully Offline** | Yes | Yes | No | Yes | No |
 
-## Key Differentiators for Frajola
+> The "MVP vs Planned" split is intentional. We are honest about what ships in v1 vs what's on the roadmap.
 
-### 1. **100% Free**
-No subscription, no usage limits, no hidden costs. Funded by donations or sponsorships, not user payments.
+## Key Differentiators
 
-### 2. **Linux Support**
-The only meeting recorder with full Linux support. Important for developers and privacy-conscious users.
+### 1. Privacy-First + Local by Default
+Not just "we support local" — local is the **default**. Whisper runs on your machine. Ollama runs on your machine. No data leaves your device unless you opt in.
 
-### 3. **Open Source**
-Full transparency. Users can audit the code, self-host, or contribute improvements.
+### 2. Linux Support
+The only meeting recorder with full Linux support. Critical for developers and the open-source community.
 
-### 4. **Privacy-First**
-- All data stored locally by default
-- Local transcription option (Whisper)
-- No cloud required for basic functionality
-- No telemetry without consent
+### 3. Open Source
+Full transparency. Users can audit the code, self-host, or contribute.
 
-### 5. **No Bot, Ever**
-Works with ANY meeting platform - Zoom, Meet, Teams, Discord, phone calls, in-person (via mic).
+### 4. Free, No Limits
+No subscription, no usage caps, no "10 meetings/month" restrictions.
+
+### 5. No Bot, Ever
+Works with any audio source — Zoom, Meet, Teams, Discord, phone calls, in-person (via mic).
 
 ## Target Market Gap
 
 ```
-                     │
-    Premium UX       │   Amie ●
-    (Paid)           │
-                     │
-    ─────────────────┼───────────────────────────────
-                     │
-    Basic UX         │   Jamie ●    Otter ●    Fireflies ●
-    (Paid)           │
-                     │
-    ─────────────────┼───────────────────────────────
-                     │
-    Premium UX       │                    ▣ Frajola
-    (Free)           │
-                     │
-                   macOS-only        Cross-Platform
+              Privacy
+                 ▲
+                 │
+    Full Local   │   Frajola ★
+    + Free       │
+    + Open Source │
+                 │
+    ─────────────┼────────────────────
+                 │
+    Cloud-only   │   Amie ●   Jamie ●
+    + Paid       │
+    + Closed     │   Otter ●  Fireflies ●
+                 │
+                 └──────────────────────► Platform Coverage
+              macOS-only          Cross-Platform + Linux
 ```
 
-**Frajola fills the gap:** Amie's UX + Free + Cross-Platform
+**Frajola fills the gap:** Privacy-first + Free + Cross-Platform + Open Source.
+
+No other product occupies this quadrant.
 
 ## Branding
 
-**Name:** Frajola (Brazilian Portuguese name for Sylvester the cat 🐱)  
-**Domain:** frajola.app  
-**Tagline:** "Your meeting sidekick"  
-**Positioning:** The free, cross-platform Amie alternative
+**Name:** Frajola (Brazilian Portuguese name for Sylvester the cat)
+**Domain:** frajola.app
+**Tagline:** "Privacy-first meeting recorder. No bots. Local by default."
+**Positioning:** The meeting recorder for people who care about where their data goes.
 
 ## Go-to-Market Strategy
 
 ### Launch Channels
-1. **Hacker News** - Technical audience, Linux users
-2. **Product Hunt** - Early adopter visibility
-3. **Reddit** - r/productivity, r/remotework, r/linux
-4. **Dev.to / Hashnode** - Developer audience
-5. **YouTube** - Demo videos and tutorials
+1. **Hacker News** — Technical audience, Linux users, privacy-conscious
+2. **Reddit** — r/linux, r/selfhosted, r/privacy, r/productivity
+3. **Dev.to / Hashnode** — Developer audience
+4. **Product Hunt** — Early adopter visibility
+5. **GitHub** — README, topics, discussions
 
-### Positioning
-*"The meeting recorder that doesn't crash your meeting."*
-
-Focus messaging on:
-- Free (vs $20-50/month competitors)
-- Privacy (no bot, no cloud required)
-- Cross-platform (Linux!)
-- Open source (transparency)
+### Key Messages
+- "Your meeting audio never leaves your machine (unless you want it to)"
+- "The only meeting recorder that runs on Linux"
+- "Open source. Free forever. No bots."
+- "Powered by Whisper + Ollama — no API keys needed"
 
 ### Content Strategy
-- Blog posts comparing Frajola vs competitors
-- "How to record meetings privately" guides
-- Video tutorials for each platform
-- GitHub README optimization for discoverability
+- "How to record meetings privately on Linux" tutorial
+- "Local-first meeting notes with Whisper and Ollama" blog post
+- Comparison posts: Frajola vs Jamie, Frajola vs Otter
+- Video demo showing fully offline workflow

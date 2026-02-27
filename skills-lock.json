@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "skills": {
+    "product-designer": {
+      "source": "borghei/claude-skills",
+      "sourceType": "github",
+      "computedHash": "4d9db5006042f024f42e9e56e4496489b6f2c9698b53901d9d21e5cd0d343151"
+    },
+    "tauri-v2": {
+      "source": "nodnarbnitram/claude-code-extensions",
+      "sourceType": "github",
+      "computedHash": "72248dbe36769a12c38c07437063cc5a1ad2d182fee87fb72d92a8fa37ce4a0f"
+    }
+  }
+}
