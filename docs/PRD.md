@@ -4,6 +4,7 @@
 
 **Product Name:** MeetLog  
 **Tagline:** Free meeting notes, powered by AI. No bots needed.  
+**Inspiration:** [Amie](https://amie.so) - the elegant AI note taker  
 **Target Launch:** Q2 2026
 
 ## Problem Statement
@@ -13,7 +14,18 @@ Professionals spend hours in meetings every week but struggle to:
 2. Share meeting context with absent teammates
 3. Search past discussions for important information
 
-Existing solutions like Fireflies.ai and Otter.ai require intrusive meeting bots that:
+**Amie** solves this beautifully on macOS with:
+- Elegant notch UI
+- No meeting bots
+- AI chat to query past meetings
+- Smart integrations
+
+But Amie is:
+- **macOS only** - No Windows or Linux
+- **Paid** - Subscription pricing
+- **Closed source** - No transparency
+
+Existing alternatives like Fireflies.ai and Otter.ai require intrusive meeting bots that:
 - Alert all participants to recording
 - Create awkward dynamics in sensitive meetings
 - Don't work for in-person or phone calls

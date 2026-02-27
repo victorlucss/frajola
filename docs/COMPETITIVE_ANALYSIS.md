@@ -6,7 +6,39 @@ The AI meeting notes market is growing rapidly as remote/hybrid work becomes per
 
 ## Direct Competitors
 
-### 1. Jamie (meetjamie.ai)
+### 1. Amie (amie.so) ⭐ PRIMARY INSPIRATION
+
+**What they do:** Elegant AI note taker with macOS notch integration, AI chat, and smart integrations.
+
+**Key Features:**
+- 🎯 Notch UI on macOS - beautiful, non-intrusive
+- ⏸️ Pause/resume recording (speak "off the record")
+- 🤖 AI Chat - ask questions about ANY past meeting
+- 📧 Email drafts in your writing style
+- 🔗 Integrations: Hubspot, Pipedrive, Notion, Slack, Linear
+- 📄 Shareable pages for clients/team
+- 🎤 Speaker memory - remembers names across meetings
+- 📅 Calendar integration - auto-record scheduled meetings
+
+**Pricing:** Paid (pricing not public on website)
+
+**Strengths:**
+- ✅ Exceptional UX and design
+- ✅ No meeting bot
+- ✅ Context-aware AI (knows your business)
+- ✅ Full workflow automation (not just transcription)
+- ✅ Shareable meeting pages
+
+**Weaknesses:**
+- ❌ macOS only (no Windows, no Linux)
+- ❌ Paid product
+- ❌ Closed source
+
+**Our Opportunity:** Bring Amie's UX philosophy to ALL platforms, for FREE.
+
+---
+
+### 2. Jamie (meetjamie.ai)
 
 **What they do:** Bot-free AI meeting assistant that captures system audio directly.
 
@@ -174,22 +206,22 @@ The AI meeting notes market is growing rapidly as remote/hybrid work becomes per
 
 ## Competitive Matrix
 
-| Feature | MeetLog | Jamie | Otter | Fireflies | Fathom | Krisp |
-|---------|---------|-------|-------|-----------|--------|-------|
-| **Price** | Free | $24+ | $17+ | $18+ | Free* | $16+ |
-| **No Bot** | ✅ | ✅ | ⚠️ | ❌ | ❌ | ✅ |
-| **Windows** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **macOS** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Linux** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Offline** | ✅ | ✅ | ❌ | ❌ | ❌ | ⚠️ |
-| **Open Source** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Speaker ID** | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ |
-| **AI Summary** | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| **Real-time** | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Mobile** | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
-| **CRM Integrations** | ❌ | ⚠️ | ✅ | ✅ | ✅ | ❌ |
-
-*Fathom free tier has limitations
+| Feature | MeetLog | **Amie** | Jamie | Otter | Fireflies |
+|---------|---------|----------|-------|-------|-----------|
+| **Price** | Free | Paid | $24+ | $17+ | $18+ |
+| **No Bot** | ✅ | ✅ | ✅ | ⚠️ | ❌ |
+| **Windows** | ✅ | ❌ | ✅ | ✅ | ✅ |
+| **macOS** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Linux** | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Floating UI** | ✅ | ✅ (notch) | ❌ | ❌ | ❌ |
+| **Pause/Resume** | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **AI Chat** | ✅ (v2) | ✅ | ❌ | ⚠️ | ⚠️ |
+| **Speaker Memory** | ✅ (v2) | ✅ | ❌ | ❌ | ❌ |
+| **Shareable Pages** | ✅ (v2) | ✅ | ❌ | ❌ | ❌ |
+| **Email Drafts** | ❌ | ✅ | ❌ | ❌ | ❌ |
+| **Integrations** | ✅ (v3) | ✅ | ⚠️ | ✅ | ✅ |
+| **Open Source** | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Offline** | ✅ | ⚠️ | ✅ | ❌ | ❌ |
 
 ## Key Differentiators for MeetLog
 
@@ -214,18 +246,24 @@ Works with ANY meeting platform - Zoom, Meet, Teams, Discord, phone calls, in-pe
 ## Target Market Gap
 
 ```
-             │
-    Paid     │   Jamie ●    Otter ●    Fireflies ●
-             │
-    ─────────┼───────────────────────────────────────
-             │
-    Free     │                    ▣ MeetLog
-             │
-             │
-            Bot-Based          Bot-Free
+                     │
+    Premium UX       │   Amie ●
+    (Paid)           │
+                     │
+    ─────────────────┼───────────────────────────────
+                     │
+    Basic UX         │   Jamie ●    Otter ●    Fireflies ●
+    (Paid)           │
+                     │
+    ─────────────────┼───────────────────────────────
+                     │
+    Premium UX       │                    ▣ MeetLog
+    (Free)           │
+                     │
+                   macOS-only        Cross-Platform
 ```
 
-**MeetLog fills the gap:** Free + Bot-Free + Cross-Platform
+**MeetLog fills the gap:** Amie's UX + Free + Cross-Platform
 
 ## Go-to-Market Strategy
 

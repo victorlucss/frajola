@@ -2,37 +2,50 @@
 
 > Free, cross-platform meeting recorder with transcription and AI-powered notes. No bots. Privacy-first.
 
+**Inspired by [Amie](https://amie.so)** - the elegant AI note taker with notch UI.
+
 ## What is MeetLog?
 
 MeetLog is a desktop app that records your meetings directly from your computer's audio output and microphone - no need to invite a bot to your calls. It works with any meeting platform (Zoom, Google Meet, Teams, etc.) and generates transcripts and meeting notes automatically.
 
+Think **Amie, but free and cross-platform**.
+
 ## Why MeetLog?
 
-| Feature | MeetLog | Jamie | Otter.ai | Fireflies |
-|---------|---------|-------|----------|-----------|
-| Price | **Free** | $24/mo | $16.99/mo | $18/mo |
-| No Meeting Bot | ✅ | ✅ | ⚠️ Optional | ❌ |
-| Windows | ✅ | ✅ | ✅ | ✅ |
+| Feature | MeetLog | Amie | Jamie | Otter.ai |
+|---------|---------|------|-------|----------|
+| Price | **Free** | Paid | $24/mo | $16.99/mo |
+| No Meeting Bot | ✅ | ✅ | ✅ | ⚠️ |
+| Windows | ✅ | ❌ | ✅ | ✅ |
 | macOS | ✅ | ✅ | ✅ | ✅ |
 | Linux | ✅ | ❌ | ❌ | ❌ |
-| Offline Mode | ✅ | ✅ | ❌ | ❌ |
+| Floating UI | ✅ | ✅ (notch) | ❌ | ❌ |
+| AI Chat | ✅ | ✅ | ❌ | ⚠️ |
 | Open Source | ✅ | ❌ | ❌ | ❌ |
 
 ## Features
 
 ### MVP (v1.0)
 - [ ] Record system audio + microphone simultaneously
-- [ ] Auto-detect meeting start (optional)
+- [ ] Floating UI / mini player (like Amie's notch)
+- [ ] Pause/resume recording (speak "off the record")
+- [ ] Auto-detect meeting start/end
 - [ ] Generate transcript with speaker diarization
 - [ ] AI-powered meeting summary and action items
 - [ ] Export to Markdown, PDF, or plain text
 
-### Roadmap
-- [ ] Calendar integration (Google, Outlook)
-- [ ] Real-time transcription
-- [ ] Custom vocabulary and speaker names
-- [ ] Team sharing and collaboration
-- [ ] Integrations (Notion, Slack, etc.)
+### v2.0 (Planned)
+- [ ] **AI Chat** - Ask questions about any past meeting
+- [ ] **Calendar integration** - Google, Outlook
+- [ ] **Smart recordings** - Auto-record scheduled meetings
+- [ ] **Speaker memory** - Remember names across meetings
+- [ ] **Shareable pages** - Share notes with team/clients
+
+### v3.0 (Future)
+- [ ] **Integrations** - Notion, Slack, Linear, Hubspot
+- [ ] **Email drafts** - AI-generated follow-ups
+- [ ] **Meeting insights** - Analytics across all meetings
+- [ ] **Team workspace** - Collaboration features
 
 ## Tech Stack
 
