@@ -1,6 +1,13 @@
-# Frajola 🐱
+# Frajola
 
-> Free, cross-platform meeting recorder with transcription and AI-powered notes. No bots. Privacy-first.
+<p align="center">
+  <img src="assets/icon.jpg" width="200" alt="Frajola">
+</p>
+
+<p align="center">
+  <strong>Free, cross-platform meeting recorder with transcription and AI-powered notes.</strong><br>
+  No bots. Privacy-first.
+</p>
 
 **Website:** [frajola.app](https://frajola.app)
 
