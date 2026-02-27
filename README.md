@@ -36,6 +36,7 @@ Think **Amie, but free and cross-platform**.
 
 ### v2.0 (Planned)
 - [ ] **AI Chat** - Ask questions about any past meeting
+- [ ] **Local LLM** - Run AI 100% offline (Ollama, llama.cpp)
 - [ ] **Calendar integration** - Google, Outlook
 - [ ] **Smart recordings** - Auto-record scheduled meetings
 - [ ] **Speaker memory** - Remember names across meetings
@@ -52,9 +53,17 @@ Think **Amie, but free and cross-platform**.
 - **Framework:** Electron
 - **Frontend:** React + TypeScript
 - **Audio Capture:** Native system audio loopback
-- **Transcription:** OpenAI Whisper (local) or API
-- **AI Notes:** GPT-4o-mini or Claude
+- **Transcription:** Whisper (local via whisper.cpp) or API
+- **AI Notes:** Local LLM (Ollama) or Cloud (GPT/Claude)
 - **Database:** SQLite (local)
+
+### Privacy Modes
+
+| Mode | Transcription | AI Notes | Data Sent |
+|------|---------------|----------|-----------|
+| **Full Local** | Whisper.cpp | Ollama | None ✅ |
+| **Hybrid** | Whisper.cpp | GPT/Claude API | Transcript only |
+| **Cloud** | Whisper API | GPT/Claude API | Audio + Transcript |
 
 ## Getting Started
 

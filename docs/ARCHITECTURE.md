@@ -334,14 +334,56 @@ ipcMain.handle('meeting:summarize', async (_, meetingId: string) => {
 
 ### v2 Features
 
+- **Local LLM**: Ollama/llama.cpp for fully offline AI notes
+- **AI Chat**: Query past meetings with RAG
 - **Real-time transcription**: Stream to Whisper API during recording
 - **Calendar integration**: Auto-detect meeting start from calendar
 - **Cloud sync**: Optional encrypted backup to cloud storage
 - **Team features**: Share transcripts with team members
 - **Integrations**: Notion, Slack, Linear, etc.
 
+### Local LLM Strategy
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Privacy Modes                             │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │  Full Local  │  │    Hybrid    │  │    Cloud     │       │
+│  │              │  │              │  │              │       │
+│  │ Whisper.cpp  │  │ Whisper.cpp  │  │ Whisper API  │       │
+│  │      +       │  │      +       │  │      +       │       │
+│  │   Ollama     │  │  GPT/Claude  │  │  GPT/Claude  │       │
+│  │              │  │              │  │              │       │
+│  │ Data: None   │  │ Data: Text   │  │ Data: Audio  │       │
+│  └──────────────┘  └──────────────┘  └──────────────┘       │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Recommended Local Models:**
+
+| Model | Size | Speed | Quality | Use Case |
+|-------|------|-------|---------|----------|
+| Llama 3.2 3B | 2GB | Fast | Good | Quick summaries |
+| Mistral 7B | 4GB | Medium | Better | Detailed notes |
+| Llama 3.1 8B | 5GB | Medium | Great | Best local quality |
+| Qwen 2.5 7B | 4GB | Medium | Great | Multilingual |
+
+**Implementation:**
+```typescript
+// Check if Ollama is running
+const ollamaAvailable = await checkOllama();
+
+// Use local or fallback to cloud
+const summarize = ollamaAvailable 
+  ? summarizeWithOllama(transcript, 'llama3.2')
+  : summarizeWithOpenAI(transcript, 'gpt-4o-mini');
+```
+
 ### Potential Stack Changes
 
 - **Tauri**: Consider migrating if Tauri audio capture matures
-- **Local LLMs**: Ollama/llama.cpp for fully offline AI notes
 - **WebGPU Whisper**: In-browser transcription for even faster local processing
+- **MLX**: Apple Silicon optimized inference for macOS

@@ -323,6 +323,101 @@ response.utterances.forEach(u => {
 
 ## AI Summarization
 
+### Local LLM Options
+
+For users who want 100% offline/private AI notes.
+
+#### Option 1: Ollama (Recommended)
+
+Easiest way to run local LLMs. Cross-platform, good performance.
+
+```typescript
+import ollama from 'ollama';
+
+const response = await ollama.chat({
+  model: 'llama3.2', // or mistral, qwen2.5
+  messages: [
+    { role: 'system', content: MEETING_SUMMARY_PROMPT },
+    { role: 'user', content: transcript }
+  ]
+});
+```
+
+**Models for Meeting Notes:**
+
+| Model | VRAM | Speed | Quality | Notes |
+|-------|------|-------|---------|-------|
+| `llama3.2:3b` | 2GB | ⚡⚡⚡ | ★★★ | Fast, good for quick summaries |
+| `mistral:7b` | 4GB | ⚡⚡ | ★★★★ | Great balance |
+| `llama3.1:8b` | 5GB | ⚡⚡ | ★★★★★ | Best quality |
+| `qwen2.5:7b` | 4GB | ⚡⚡ | ★★★★ | Best for multilingual |
+| `phi3:mini` | 2GB | ⚡⚡⚡ | ★★★ | Microsoft, very fast |
+
+**Integration:**
+```typescript
+// Check if Ollama is available
+async function checkOllama(): Promise<boolean> {
+  try {
+    await fetch('http://localhost:11434/api/tags');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Summarize with fallback
+async function summarize(transcript: string): Promise<string> {
+  const settings = getSettings();
+  
+  if (settings.aiProvider === 'local') {
+    if (await checkOllama()) {
+      return summarizeWithOllama(transcript);
+    }
+    throw new Error('Ollama not running. Start with: ollama serve');
+  }
+  
+  return summarizeWithCloud(transcript);
+}
+```
+
+#### Option 2: llama.cpp (Direct)
+
+Lower-level, more control, bundled with app.
+
+```typescript
+import { LlamaModel, LlamaContext } from 'node-llama-cpp';
+
+const model = new LlamaModel({ modelPath: './models/llama-3.2-3b.gguf' });
+const context = new LlamaContext({ model });
+const session = new LlamaChatSession({ context });
+
+const response = await session.prompt(transcript);
+```
+
+**Pros:** No external dependency, bundled with app
+**Cons:** Larger app size (~2-5GB), more complex setup
+
+#### Option 3: MLX (macOS Apple Silicon)
+
+Optimized for M1/M2/M3 chips.
+
+```python
+# Via Python subprocess
+import mlx_lm
+
+model, tokenizer = mlx_lm.load("mlx-community/Llama-3.2-3B-Instruct-4bit")
+response = mlx_lm.generate(model, tokenizer, prompt=transcript)
+```
+
+**Pros:** Fastest on Apple Silicon
+**Cons:** macOS only, requires Python
+
+### Recommendation
+
+1. **Default:** Cloud (GPT-4o-mini) - easiest, cheapest, best quality
+2. **Privacy mode:** Ollama - user installs separately, we detect and use
+3. **Future:** Bundle llama.cpp for true zero-dependency local mode
+
 ### Prompt Engineering
 
 ```typescript
