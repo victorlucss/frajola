@@ -79,12 +79,14 @@ MeetLog is a **free, open-source desktop app** that records meetings directly fr
 
 **Requirements:**
 - Convert audio to text with high accuracy
-- Support multiple languages (start with English, Portuguese)
+- **Languages:** English and Português Brasileiro (MVP)
 - Speaker diarization (identify different speakers)
 - Timestamps for each segment
+- Auto-detect language or manual selection
 
 **Acceptance Criteria:**
 - [ ] Transcription accuracy > 90% for clear audio
+- [ ] Works with English and Portuguese audio
 - [ ] Different speakers are identified (Speaker 1, Speaker 2, etc.)
 - [ ] Timestamps are included every 30 seconds or on speaker change
 - [ ] Transcription completes within 2x audio duration
@@ -142,6 +144,21 @@ Brief 2-3 sentence overview of the meeting.
 - Export to PDF
 - Export to plain text (.txt)
 - Copy to clipboard
+
+### 6. Multilingual Support (i18n)
+**User Story:** As a Brazilian user, I want the app in Portuguese so I can use it comfortably.
+
+**Requirements:**
+- App UI available in English and Português Brasileiro
+- Auto-detect system language
+- Manual language selection in settings
+- AI-generated notes in the same language as the meeting
+
+**Acceptance Criteria:**
+- [ ] All UI strings are translatable (i18n framework)
+- [ ] App detects system language and sets default
+- [ ] User can switch language in settings
+- [ ] AI summaries match meeting language (English meeting → English notes)
 
 ## Non-Goals (MVP)
 

@@ -210,15 +210,28 @@ const transcript = await whisper({
 ```
 
 **Models:**
-| Model | Size | Speed | Accuracy |
-|-------|------|-------|----------|
-| tiny | 75MB | ~32x | Good for English |
-| base | 142MB | ~16x | Better accuracy |
-| small | 466MB | ~6x | Good multilingual |
-| medium | 1.5GB | ~2x | High accuracy |
-| large | 3GB | ~1x | Best accuracy |
+| Model | Size | Speed | Accuracy | Languages |
+|-------|------|-------|----------|-----------|
+| tiny | 75MB | ~32x | Good | English only |
+| base | 142MB | ~16x | Better | English only |
+| small | 466MB | ~6x | Good | **Multilingual** ✅ |
+| medium | 1.5GB | ~2x | High | **Multilingual** ✅ |
+| large | 3GB | ~1x | Best | **Multilingual** ✅ |
 
-**Recommendation:** Bundle `base.en` model (142MB) by default, allow downloading larger models.
+**Recommendation for pt-BR + English:**
+- Bundle `small` model (466MB) - good multilingual support
+- Or detect language and download appropriate model on first use
+
+**Language Detection:**
+```typescript
+// Whisper can auto-detect language
+const result = await whisper({
+  filePath: 'recording.wav',
+  modelPath: './models/ggml-small.bin',
+  // language: 'auto' or specific 'pt' / 'en'
+});
+// result.language = 'pt' or 'en'
+```
 
 ### Option 2: OpenAI Whisper API
 

@@ -33,6 +33,7 @@ Think **Amie, but free and cross-platform**.
 - [ ] Generate transcript with speaker diarization
 - [ ] AI-powered meeting summary and action items
 - [ ] Export to Markdown, PDF, or plain text
+- [ ] **Multilingual:** English + Português Brasileiro
 
 ### v2.0 (Planned)
 - [ ] **AI Chat** - Ask questions about any past meeting

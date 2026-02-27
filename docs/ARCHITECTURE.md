@@ -30,10 +30,11 @@ MeetLog is an Electron-based desktop application that captures audio, generates 
 | Frontend | React 18 + TypeScript | Modern, component-based, type-safe |
 | Styling | Tailwind CSS | Fast development, consistent design |
 | State | Zustand | Simple, minimal boilerplate |
+| i18n | i18next + react-i18next | Industry standard, simple API |
 | Database | SQLite (better-sqlite3) | Local, fast, no server needed |
 | Audio | Native APIs + electron-audio-loopback | System audio capture |
 | Transcription | Whisper.cpp (local) or OpenAI API | Flexibility: offline vs cloud |
-| AI Notes | OpenAI GPT-4o-mini or Claude | Cost-effective summarization |
+| AI Notes | Ollama (local) or GPT/Claude (cloud) | Privacy options |
 | Build | electron-builder | Cross-platform packaging |
 
 ## Project Structure
@@ -185,6 +186,61 @@ Transcript Ready
 │  Save to DB     │
 │  + Display      │
 └─────────────────┘
+```
+
+## Internationalization (i18n)
+
+### Supported Languages (MVP)
+- 🇺🇸 English (en)
+- 🇧🇷 Português Brasileiro (pt-BR)
+
+### Structure
+```
+src/
+└── renderer/
+    └── locales/
+        ├── en/
+        │   └── translation.json
+        └── pt-BR/
+            └── translation.json
+```
+
+### Implementation
+```typescript
+// i18n setup
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+
+i18n.use(initReactI18next).init({
+  resources: {
+    en: { translation: require('./locales/en/translation.json') },
+    'pt-BR': { translation: require('./locales/pt-BR/translation.json') },
+  },
+  lng: navigator.language, // Auto-detect
+  fallbackLng: 'en',
+});
+
+// Usage in components
+function RecordButton() {
+  const { t } = useTranslation();
+  return <button>{t('recording.start')}</button>;
+}
+```
+
+### AI Notes Language
+
+AI-generated notes should match the meeting language:
+
+```typescript
+const PROMPTS = {
+  en: `You are a meeting notes assistant. Summarize in English...`,
+  'pt-BR': `Você é um assistente de notas de reunião. Resuma em português brasileiro...`,
+};
+
+async function summarize(transcript: string, language: string) {
+  const prompt = PROMPTS[language] || PROMPTS.en;
+  // ...
+}
 ```
 
 ## Database Schema
