@@ -1,8 +1,10 @@
-import { useState, useMemo } from "react";
-import type { View } from "./types";
+import { useState, useMemo, useCallback } from "react";
+import type { MeetingDetail as MeetingDetailType } from "./types";
 import { getMockDetail } from "./lib/mock-data";
+import { isTauri, invoke } from "./lib/tauri";
 import { useMeetings } from "./hooks/useMeetings";
-import { useSettings } from "./hooks/useSettings";
+import { useMeetingDetail } from "./hooks/useMeetingDetail";
+import { useRecording } from "./hooks/useRecording";
 
 import AppShell from "./components/layout/AppShell";
 import IconRail from "./components/layout/IconRail";
@@ -10,133 +12,136 @@ import Sidebar from "./components/layout/Sidebar";
 import MainPanel from "./components/layout/MainPanel";
 import MeetingDetail from "./components/meetings/MeetingDetail";
 import MeetingEmpty from "./components/meetings/MeetingEmpty";
-import Icon from "./components/shared/Icon";
+import RecordingIndicator from "./components/recording/RecordingIndicator";
+import SettingsPage from "./components/settings/SettingsPage";
 
 function App() {
-  const [view, setView] = useState<View>("home");
-  const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [selectedMeetingId, setSelectedMeetingId] = useState<number | null>(null);
 
-  const { meetings, isDemo } = useMeetings();
-  const { settings, error: settingsError } = useSettings();
+  const { meetings, isDemo, refresh } = useMeetings();
 
-  const meetingDetail = useMemo(() => {
+  const recording = useRecording({
+    onComplete: async (meeting) => {
+      await refresh();
+      setSelectedMeetingId(meeting.id);
+      setSettingsOpen(false);
+      // Trigger transcription in the background
+      if (isTauri()) {
+        invoke("transcribe_meeting", { meetingId: meeting.id }).catch((err) => {
+          console.error("Transcription failed:", err);
+        });
+      }
+    },
+  });
+
+  const { detail: realDetail } = useMeetingDetail(selectedMeetingId);
+
+  const meetingDetail: MeetingDetailType | null = useMemo(() => {
     if (!selectedMeetingId) return null;
-    return getMockDetail(selectedMeetingId) ?? null;
-  }, [selectedMeetingId]);
+    // Use real data from backend if available
+    if (realDetail) return realDetail;
+    // Fallback to mock data for demo meetings
+    const mock = getMockDetail(selectedMeetingId);
+    if (!mock) return null;
+    // Convert mock format to MeetingDetail
+    return {
+      meeting: mock.meeting,
+      transcript: mock.transcript.map((t, i) => ({
+        id: i,
+        meeting_id: mock.meeting.id,
+        speaker: t.speaker,
+        start_ms: parseTimestamp(t.timestamp),
+        end_ms: 0,
+        content: t.text,
+      })),
+      summary: mock.summary,
+      action_items: mock.action_items.map((a, i) => ({
+        id: i,
+        meeting_id: mock.meeting.id,
+        description: a.text,
+        assignee: a.assignee ?? null,
+        completed: a.done,
+      })),
+      notes: mock.notes,
+    };
+  }, [selectedMeetingId, realDetail]);
 
   function handleNewRecording() {
-    // Placeholder — will trigger recording in the future
+    if (recording.status === "idle") {
+      recording.startRecording();
+    } else if (recording.status === "recording" || recording.status === "paused") {
+      recording.stopRecording();
+    }
   }
 
+  const isRecordingActive = recording.status !== "idle";
+
+  const toggleSettings = useCallback(() => setSettingsOpen((o) => !o), []);
+
   return (
-    <AppShell
-      iconRail={
-        <IconRail
-          activeView={view}
-          onViewChange={(v) => {
-            setView(v);
-            if (v !== "home") setSelectedMeetingId(null);
-          }}
-          onNewRecording={handleNewRecording}
-        />
-      }
-      sidebar={
-        view === "home" ? (
+    <>
+      <AppShell
+        iconRail={
+          <IconRail
+            onSettingsToggle={toggleSettings}
+            settingsOpen={settingsOpen}
+            onNewRecording={handleNewRecording}
+            isRecording={isRecordingActive}
+          />
+        }
+        sidebar={
           <Sidebar
             meetings={meetings}
             selectedId={selectedMeetingId}
             onSelect={setSelectedMeetingId}
             isDemo={isDemo}
+            recordingIndicator={
+              isRecordingActive ? (
+                <RecordingIndicator
+                  status={recording.status}
+                  elapsedSeconds={recording.elapsedSeconds}
+                  onPause={recording.pauseRecording}
+                  onResume={recording.resumeRecording}
+                  onStop={recording.stopRecording}
+                />
+              ) : undefined
+            }
           />
-        ) : (
-          <SettingsSidebar />
-        )
-      }
-      main={
-        <MainPanel>
-          {view === "home" ? (
-            meetingDetail ? (
+        }
+        main={
+          <MainPanel>
+            {meetingDetail ? (
               <MeetingDetail detail={meetingDetail} />
             ) : (
               <MeetingEmpty />
-            )
-          ) : (
-            <SettingsPanel settings={settings} error={settingsError} />
-          )}
-        </MainPanel>
-      }
-    />
-  );
-}
-
-function SettingsSidebar() {
-  return (
-    <div className="flex h-full flex-col border-r border-border bg-bg">
-      <div className="px-4 py-4">
-        <h2 className="text-sm font-semibold text-text-primary">Settings</h2>
-      </div>
-      <div className="flex-1 overflow-y-auto px-2">
-        <div className="space-y-0.5">
-          {["General", "Privacy", "AI Provider", "Transcription", "Language"].map(
-            (section) => (
-              <div
-                key={section}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-text-secondary hover:bg-bg-card-hover transition-colors cursor-pointer"
-              >
-                <Icon name="settings" size={14} className="text-text-muted" />
-                {section}
+            )}
+            {recording.error && (
+              <div className="fixed bottom-4 right-4 max-w-sm rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                <p>{recording.error}</p>
+                <button
+                  onClick={() => invoke("open_audio_permission_settings")}
+                  className="mt-2 rounded bg-red-500/20 px-3 py-1 text-xs font-medium text-red-200 hover:bg-red-500/30 transition-colors"
+                >
+                  Open System Settings
+                </button>
               </div>
-            ),
-          )}
-        </div>
-      </div>
-    </div>
+            )}
+          </MainPanel>
+        }
+      />
+      {settingsOpen && <SettingsPage onClose={() => setSettingsOpen(false)} />}
+    </>
   );
 }
 
-interface SettingsPanelProps {
-  settings: { key: string; value: string }[];
-  error: string | null;
-}
-
-function SettingsPanel({ settings, error }: SettingsPanelProps) {
-  return (
-    <div className="flex h-full flex-col overflow-y-auto p-6">
-      <h1 className="mb-1 text-lg font-semibold text-text-primary">Settings</h1>
-      <p className="mb-6 text-sm text-text-tertiary">
-        Loaded from SQLite
-      </p>
-
-      {error ? (
-        <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">
-          {error}
-        </div>
-      ) : (
-        <div className="rounded-lg border border-border bg-bg-card">
-          {settings.map((s, i) => (
-            <div
-              key={s.key}
-              className={`flex items-center justify-between px-4 py-3 ${
-                i < settings.length - 1 ? "border-b border-border-subtle" : ""
-              }`}
-            >
-              <span className="font-mono text-sm text-text-secondary">
-                {s.key}
-              </span>
-              <span className="rounded-full bg-accent-glow px-3 py-1 text-sm font-medium text-accent">
-                {s.value}
-              </span>
-            </div>
-          ))}
-          {settings.length === 0 && (
-            <p className="px-4 py-4 text-center text-sm text-text-tertiary">
-              Loading...
-            </p>
-          )}
-        </div>
-      )}
-    </div>
-  );
+/** Parse "HH:MM:SS" or "MM:SS" timestamp to milliseconds */
+function parseTimestamp(ts: string): number {
+  const parts = ts.split(":").map(Number);
+  if (parts.length === 3) {
+    return (parts[0] * 3600 + parts[1] * 60 + parts[2]) * 1000;
+  }
+  return (parts[0] * 60 + parts[1]) * 1000;
 }
 
 export default App;

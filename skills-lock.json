@@ -6,6 +6,11 @@
       "sourceType": "github",
       "computedHash": "4d9db5006042f024f42e9e56e4496489b6f2c9698b53901d9d21e5cd0d343151"
     },
+    "rust-best-practices": {
+      "source": "apollographql/skills",
+      "sourceType": "github",
+      "computedHash": "ba11ae333ab71e30dd83de34d5f5cfa23ed3ee782618215f7fb69b749d63762d"
+    },
     "tauri-v2": {
       "source": "nodnarbnitram/claude-code-extensions",
       "sourceType": "github",

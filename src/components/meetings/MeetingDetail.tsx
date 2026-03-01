@@ -29,7 +29,7 @@ const metaItems: {
   {
     label: "Language",
     icon: "globe",
-    getValue: (d) => d.meeting.language,
+    getValue: (d) => d.meeting.language ?? "en",
   },
   {
     label: "Status",
@@ -39,10 +39,31 @@ const metaItems: {
 ];
 
 export default function MeetingDetail({ detail }: Props) {
-  const [activeTab, setActiveTab] = useState<Tab>("summary");
+  const isTranscribing = detail.meeting.status === "transcribing";
+  const isSummarizing = detail.meeting.status === "summarizing";
+  const defaultTab: Tab = detail.meeting.is_demo ? "summary" : "transcript";
+  const [activeTab, setActiveTab] = useState<Tab>(defaultTab);
 
   return (
     <div className="flex h-full flex-col">
+      {/* Processing indicator */}
+      {isTranscribing && (
+        <div className="flex items-center gap-2 border-b border-accent/20 bg-accent/5 px-6 py-3">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-accent" />
+          <span className="text-sm font-medium text-accent">
+            Transcribing audio...
+          </span>
+        </div>
+      )}
+      {isSummarizing && (
+        <div className="flex items-center gap-2 border-b border-accent/20 bg-accent/5 px-6 py-3">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-accent" />
+          <span className="text-sm font-medium text-accent">
+            Summarizing with AI...
+          </span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="shrink-0 border-b border-border px-6 py-5">
         <div className="flex items-center gap-2">

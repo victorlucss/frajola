@@ -7,26 +7,14 @@ interface Props {
   onClick: () => void;
 }
 
-const statusColor: Record<Meeting["status"], string> = {
-  completed: "bg-accent",
-  recording: "bg-red-400",
-  transcribing: "bg-yellow-400",
-  processing: "bg-blue-400",
-};
-
 export default function MeetingListItem({ meeting, selected, onClick }: Props) {
   return (
     <button
       onClick={onClick}
       className={`group flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
-        selected
-          ? "bg-bg-card border-l-2 border-accent"
-          : "hover:bg-bg-card-hover border-l-2 border-transparent"
+        selected ? "bg-bg-card" : "hover:bg-bg-card-hover"
       }`}
     >
-      <span
-        className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${statusColor[meeting.status]}`}
-      />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span

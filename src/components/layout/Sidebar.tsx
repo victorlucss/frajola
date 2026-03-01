@@ -4,12 +4,13 @@ import MeetingListItem from "../meetings/MeetingListItem";
 
 interface Props {
   meetings: Meeting[];
-  selectedId: string | null;
-  onSelect: (id: string) => void;
+  selectedId: number | null;
+  onSelect: (id: number) => void;
   isDemo: boolean;
+  recordingIndicator?: React.ReactNode;
 }
 
-export default function Sidebar({ meetings, selectedId, onSelect, isDemo }: Props) {
+export default function Sidebar({ meetings, selectedId, onSelect, isDemo, recordingIndicator }: Props) {
   const groups = groupByDate(meetings);
 
   return (
@@ -23,6 +24,11 @@ export default function Sidebar({ meetings, selectedId, onSelect, isDemo }: Prop
           </span>
         )}
       </div>
+
+      {/* Recording indicator */}
+      {recordingIndicator && (
+        <div className="shrink-0 px-3 pb-3">{recordingIndicator}</div>
+      )}
 
       {/* Meeting list */}
       <div className="flex-1 overflow-y-auto px-2 pb-4">

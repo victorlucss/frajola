@@ -1,31 +1,37 @@
 use serde::Serialize;
 
-#[derive(Debug)]
-pub struct AppError(String);
+#[derive(Debug, thiserror::Error)]
+pub enum AppError {
+    #[error("Database error: {0}")]
+    Database(#[from] rusqlite::Error),
+
+    #[error("IO error: {0}")]
+    Io(#[from] std::io::Error),
+
+    #[error("Audio error: {0}")]
+    Audio(String),
+
+    #[error("{0}")]
+    General(String),
+}
 
 impl Serialize for AppError {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
-        serializer.serialize_str(&self.0)
-    }
-}
-
-impl From<rusqlite::Error> for AppError {
-    fn from(err: rusqlite::Error) -> Self {
-        AppError(err.to_string())
+        serializer.serialize_str(&self.to_string())
     }
 }
 
 impl From<String> for AppError {
     fn from(err: String) -> Self {
-        AppError(err)
+        AppError::General(err)
     }
 }
 
-impl std::fmt::Display for AppError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+impl From<&str> for AppError {
+    fn from(err: &str) -> Self {
+        AppError::General(err.to_string())
     }
 }

@@ -1,4 +1,5 @@
 import type { Tab, MeetingDetail } from "../../types";
+import { formatTimestamp } from "../../lib/date";
 import Icon from "../shared/Icon";
 import type { IconName } from "../shared/Icon";
 
@@ -48,6 +49,21 @@ export default function MeetingTabs({ activeTab, onTabChange, detail }: Props) {
 }
 
 function SummaryContent({ detail }: { detail: MeetingDetail }) {
+  if (!detail.summary) {
+    const isSummarizing = detail.meeting.status === "summarizing";
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <Icon name="file-text" size={24} className="mb-2 text-text-muted" />
+        <p className="text-sm text-text-tertiary">
+          {isSummarizing ? "Generating summary..." : "No summary available"}
+        </p>
+        {isSummarizing && (
+          <span className="mt-2 h-2 w-2 animate-pulse rounded-full bg-accent" />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -93,6 +109,21 @@ function SummaryContent({ detail }: { detail: MeetingDetail }) {
 }
 
 function ActionsContent({ detail }: { detail: MeetingDetail }) {
+  if (detail.action_items.length === 0) {
+    const isSummarizing = detail.meeting.status === "summarizing";
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <Icon name="check-circle" size={24} className="mb-2 text-text-muted" />
+        <p className="text-sm text-text-tertiary">
+          {isSummarizing ? "Extracting action items..." : "No action items"}
+        </p>
+        {isSummarizing && (
+          <span className="mt-2 h-2 w-2 animate-pulse rounded-full bg-accent" />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2">
       {detail.action_items.map((item) => (
@@ -102,13 +133,13 @@ function ActionsContent({ detail }: { detail: MeetingDetail }) {
         >
           <div
             className={`mt-0.5 h-4 w-4 shrink-0 rounded border ${
-              item.done
+              item.completed
                 ? "border-accent bg-accent"
                 : "border-text-tertiary"
             }`}
           />
           <div className="min-w-0 flex-1">
-            <p className="text-sm text-text-secondary">{item.text}</p>
+            <p className="text-sm text-text-secondary">{item.description}</p>
             {item.assignee && (
               <p className="mt-1 text-xs text-text-tertiary">
                 Assigned to {item.assignee}
@@ -117,9 +148,6 @@ function ActionsContent({ detail }: { detail: MeetingDetail }) {
           </div>
         </div>
       ))}
-      {detail.action_items.length === 0 && (
-        <p className="text-sm text-text-tertiary">No action items</p>
-      )}
     </div>
   );
 }
@@ -130,14 +158,16 @@ function TranscriptContent({ detail }: { detail: MeetingDetail }) {
       {detail.transcript.map((seg) => (
         <div key={seg.id} className="flex gap-3">
           <span className="mt-0.5 w-16 shrink-0 text-right font-mono text-xs text-text-muted">
-            {seg.timestamp}
+            {formatTimestamp(seg.start_ms)}
           </span>
           <div className="min-w-0 flex-1">
-            <span className="text-xs font-medium text-accent">
-              {seg.speaker}
-            </span>
+            {seg.speaker && (
+              <span className="text-xs font-medium text-accent">
+                {seg.speaker}
+              </span>
+            )}
             <p className="text-sm leading-relaxed text-text-secondary">
-              {seg.text}
+              {seg.content}
             </p>
           </div>
         </div>

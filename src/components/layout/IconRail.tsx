@@ -1,15 +1,16 @@
+import frajolaLogo from "../../../assets/frajola.png";
 import Icon from "../shared/Icon";
 import type { IconName } from "../shared/Icon";
-import type { View } from "../../types";
 
 interface Props {
-  activeView: View;
-  onViewChange: (view: View) => void;
   onNewRecording: () => void;
+  onSettingsToggle: () => void;
+  settingsOpen: boolean;
+  isRecording?: boolean;
 }
 
-const topItems: { view: View; icon: IconName; label: string }[] = [
-  { view: "home", icon: "home", label: "Home" },
+const navItems: { icon: IconName; label: string }[] = [
+  { icon: "home", label: "Home" },
 ];
 
 const placeholderItems: { icon: IconName; label: string }[] = [
@@ -17,13 +18,13 @@ const placeholderItems: { icon: IconName; label: string }[] = [
   { icon: "search", label: "Search" },
 ];
 
-export default function IconRail({ activeView, onViewChange, onNewRecording }: Props) {
+export default function IconRail({ onNewRecording, onSettingsToggle, settingsOpen, isRecording }: Props) {
   return (
     <div className="flex h-full w-12 flex-col items-center border-r border-border bg-surface py-3">
       {/* Logo */}
       <div className="mb-4 flex h-8 w-8 items-center justify-center">
         <img
-          src="/assets/frajola.png"
+          src={frajolaLogo}
           alt="Frajola"
           className="h-6 w-6 rounded"
         />
@@ -31,16 +32,11 @@ export default function IconRail({ activeView, onViewChange, onNewRecording }: P
 
       {/* Top nav */}
       <div className="flex flex-col items-center gap-1">
-        {topItems.map((item) => (
+        {navItems.map((item) => (
           <button
-            key={item.view}
-            onClick={() => onViewChange(item.view)}
+            key={item.label}
             title={item.label}
-            className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
-              activeView === item.view
-                ? "bg-accent-glow text-accent"
-                : "text-text-tertiary hover:text-text-secondary hover:bg-bg-card"
-            }`}
+            className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors bg-accent-glow text-accent"
           >
             <Icon name={item.icon} size={18} />
           </button>
@@ -63,16 +59,29 @@ export default function IconRail({ activeView, onViewChange, onNewRecording }: P
       <div className="flex flex-col items-center gap-1">
         <button
           onClick={onNewRecording}
-          title="New recording"
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-text-tertiary transition-colors hover:bg-accent-glow hover:text-accent"
+          title={isRecording ? "Stop recording" : "New recording"}
+          className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+            isRecording
+              ? "bg-red-500/20 text-red-400 hover:bg-red-500/30"
+              : "text-text-tertiary hover:bg-accent-glow hover:text-accent"
+          }`}
         >
-          <Icon name="plus" size={18} />
+          {isRecording ? (
+            <span className="relative flex h-4 w-4 items-center justify-center">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-40" />
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="4" y="4" width="16" height="16" rx="2" />
+              </svg>
+            </span>
+          ) : (
+            <Icon name="plus" size={18} />
+          )}
         </button>
         <button
-          onClick={() => onViewChange("settings")}
+          onClick={onSettingsToggle}
           title="Settings"
           className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
-            activeView === "settings"
+            settingsOpen
               ? "bg-accent-glow text-accent"
               : "text-text-tertiary hover:text-text-secondary hover:bg-bg-card"
           }`}

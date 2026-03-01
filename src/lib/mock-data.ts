@@ -1,4 +1,4 @@
-import type { Meeting, MeetingDetail } from "../types";
+import type { Meeting, MockMeetingDetail } from "../types";
 
 const now = new Date();
 const today = (h: number, m: number) => {
@@ -15,69 +15,69 @@ const daysAgo = (days: number, h: number, m: number) => {
 
 export const mockMeetings: Meeting[] = [
   {
-    id: "demo-1",
+    id: 9001,
     title: "Sprint Planning",
     subtitle: "Engineering Team",
     created_at: today(10, 0),
     duration_seconds: 2700,
     language: "en",
-    status: "completed",
+    status: "complete",
     is_demo: true,
   },
   {
-    id: "demo-2",
+    id: 9002,
     title: "1:1 with Sarah",
     subtitle: "Manager Sync",
     created_at: today(14, 30),
     duration_seconds: 1800,
     language: "en",
-    status: "completed",
+    status: "complete",
     is_demo: true,
   },
   {
-    id: "demo-3",
+    id: 9003,
     title: "Product Review",
     subtitle: "Design + Product",
     created_at: daysAgo(1, 11, 0),
     duration_seconds: 3600,
     language: "en",
-    status: "completed",
+    status: "complete",
     is_demo: true,
   },
   {
-    id: "demo-4",
+    id: 9004,
     title: "Client Onboarding Call",
     subtitle: "Acme Corp",
     created_at: daysAgo(1, 16, 0),
     duration_seconds: 2400,
     language: "en",
-    status: "completed",
+    status: "complete",
     is_demo: true,
   },
   {
-    id: "demo-5",
+    id: 9005,
     title: "Architecture Discussion",
     subtitle: "Backend Team",
     created_at: daysAgo(3, 9, 30),
     duration_seconds: 4500,
     language: "en",
-    status: "completed",
+    status: "complete",
     is_demo: true,
   },
   {
-    id: "demo-6",
+    id: 9006,
     title: "Reuniao de Alinhamento",
     subtitle: "Time Brasil",
     created_at: daysAgo(5, 15, 0),
     duration_seconds: 1500,
     language: "pt-BR",
-    status: "completed",
+    status: "complete",
     is_demo: true,
   },
 ];
 
-export const mockDetails: Record<string, MeetingDetail> = {
-  "demo-1": {
+export const mockDetails: Record<number, MockMeetingDetail> = {
+  9001: {
     meeting: mockMeetings[0],
     summary: {
       overview:
@@ -109,7 +109,7 @@ export const mockDetails: Record<string, MeetingDetail> = {
     ],
     notes: "",
   },
-  "demo-2": {
+  9002: {
     meeting: mockMeetings[1],
     summary: {
       overview:
@@ -134,7 +134,7 @@ export const mockDetails: Record<string, MeetingDetail> = {
     ],
     notes: "",
   },
-  "demo-3": {
+  9003: {
     meeting: mockMeetings[2],
     summary: {
       overview:
@@ -163,7 +163,7 @@ export const mockDetails: Record<string, MeetingDetail> = {
     ],
     notes: "",
   },
-  "demo-4": {
+  9004: {
     meeting: mockMeetings[3],
     summary: {
       overview:
@@ -191,7 +191,7 @@ export const mockDetails: Record<string, MeetingDetail> = {
     ],
     notes: "",
   },
-  "demo-5": {
+  9005: {
     meeting: mockMeetings[4],
     summary: {
       overview:
@@ -221,7 +221,7 @@ export const mockDetails: Record<string, MeetingDetail> = {
     ],
     notes: "",
   },
-  "demo-6": {
+  9006: {
     meeting: mockMeetings[5],
     summary: {
       overview:
@@ -251,6 +251,6 @@ export const mockDetails: Record<string, MeetingDetail> = {
   },
 };
 
-export function getMockDetail(id: string): MeetingDetail | undefined {
+export function getMockDetail(id: number): MockMeetingDetail | undefined {
   return mockDetails[id];
 }

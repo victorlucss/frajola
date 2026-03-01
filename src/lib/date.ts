@@ -1,8 +1,28 @@
-export function formatDuration(seconds: number): string {
+export function formatDuration(seconds: number | null): string {
+  if (seconds == null) return "—";
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
   if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
+  if (m > 0) return `${m}m`;
+  return `${s}s`;
+}
+
+export function formatTimestamp(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000);
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  if (h > 0) {
+    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  }
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+}
+
+export function formatElapsed(totalSeconds: number): string {
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
 export function formatDate(iso: string): string {
@@ -22,10 +42,10 @@ export function formatTime(iso: string): string {
 
 export type DateGroup = {
   label: string;
-  meetings: { id: string; [key: string]: unknown }[];
+  meetings: { id: number; [key: string]: unknown }[];
 };
 
-export function groupByDate<T extends { id: string; created_at: string }>(
+export function groupByDate<T extends { id: number; created_at: string }>(
   meetings: T[],
 ): { label: string; meetings: T[] }[] {
   const now = new Date();
