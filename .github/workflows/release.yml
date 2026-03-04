@@ -127,7 +127,8 @@ jobs:
           security find-identity -v -p codesigning "$KEYCHAIN_PATH"
           security delete-keychain "$KEYCHAIN_PATH"
 
-      - name: Build and publish Tauri release assets
+      - name: Build and publish Tauri release assets (no notarization)
+        if: secrets.APPLE_NOTARIZE != 'true'
         uses: tauri-apps/tauri-action@v0.6.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -136,10 +137,31 @@ jobs:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          # Notarization is optional; enable only when APPLE_NOTARIZE is "true".
-          APPLE_ID: ${{ secrets.APPLE_NOTARIZE == 'true' && secrets.APPLE_ID || '' }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_NOTARIZE == 'true' && secrets.APPLE_PASSWORD || '' }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_NOTARIZE == 'true' && secrets.APPLE_TEAM_ID || '' }}
+        with:
+          tauriScript: pnpm tauri
+          tagName: ${{ env.RELEASE_TAG }}
+          releaseName: Frajola ${{ env.RELEASE_TAG }}
+          releaseBody: |
+            Automated release for ${{ env.RELEASE_TAG }}.
+
+            Download the desktop installer for your platform below.
+          releaseDraft: false
+          prerelease: ${{ contains(env.RELEASE_TAG, '-') }}
+          args: ${{ matrix.args }}
+
+      - name: Build and publish Tauri release assets (with notarization)
+        if: secrets.APPLE_NOTARIZE == 'true'
+        uses: tauri-apps/tauri-action@v0.6.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           tauriScript: pnpm tauri
           tagName: ${{ env.RELEASE_TAG }}
