@@ -1,6 +1,6 @@
 [package]
 name = "frajola"
-version = "0.1.0"
+version = "0.1.1"
 description = "Privacy-first meeting recorder"
 authors = ["Victor Lucas"]
 license = "MIT"
