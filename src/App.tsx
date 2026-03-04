@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import type { MeetingDetail as MeetingDetailType } from "./types";
 import { getMockDetail } from "./lib/mock-data";
 import { isTauri, invoke } from "./lib/tauri";
@@ -14,10 +14,13 @@ import MeetingDetail from "./components/meetings/MeetingDetail";
 import MeetingEmpty from "./components/meetings/MeetingEmpty";
 import RecordingIndicator from "./components/recording/RecordingIndicator";
 import SettingsPage from "./components/settings/SettingsPage";
+import OnboardingFlow from "./components/onboarding/OnboardingFlow";
 
 function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedMeetingId, setSelectedMeetingId] = useState<number | null>(null);
+  const [onboardingReady, setOnboardingReady] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const { meetings, isDemo, refresh } = useMeetings();
 
@@ -35,7 +38,7 @@ function App() {
     },
   });
 
-  const { detail: realDetail } = useMeetingDetail(selectedMeetingId);
+  const { detail: realDetail, refresh: refreshDetail } = useMeetingDetail(selectedMeetingId);
 
   const meetingDetail: MeetingDetailType | null = useMemo(() => {
     if (!selectedMeetingId) return null;
@@ -79,6 +82,33 @@ function App() {
 
   const toggleSettings = useCallback(() => setSettingsOpen((o) => !o), []);
 
+  useEffect(() => {
+    if (!isTauri()) {
+      setOnboardingReady(true);
+      setShowOnboarding(false);
+      return;
+    }
+
+    invoke<string | null>("get_setting", { key: "onboarding_completed" })
+      .then((v) => {
+        setShowOnboarding(v !== "1");
+      })
+      .catch(() => {
+        setShowOnboarding(true);
+      })
+      .finally(() => {
+        setOnboardingReady(true);
+      });
+  }, []);
+
+  if (!onboardingReady) {
+    return (
+      <div className="h-screen w-screen bg-bg-base flex items-center justify-center text-sm text-text-tertiary">
+        Loading...
+      </div>
+    );
+  }
+
   return (
     <>
       <AppShell
@@ -112,7 +142,7 @@ function App() {
         main={
           <MainPanel>
             {meetingDetail ? (
-              <MeetingDetail detail={meetingDetail} />
+              <MeetingDetail detail={meetingDetail} onRefresh={refreshDetail} />
             ) : (
               <MeetingEmpty />
             )}
@@ -131,6 +161,13 @@ function App() {
         }
       />
       {settingsOpen && <SettingsPage onClose={() => setSettingsOpen(false)} />}
+      {showOnboarding && (
+        <OnboardingFlow
+          onComplete={() => {
+            setShowOnboarding(false);
+          }}
+        />
+      )}
     </>
   );
 }
