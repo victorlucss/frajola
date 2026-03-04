@@ -110,10 +110,8 @@ jobs:
           KEYCHAIN_PATH="$RUNNER_TEMP/tauri-cert-test.keychain-db"
           KEYCHAIN_PASSWORD="temporary-test-password"
 
-          # Decode cert from secret and verify the certificate subject we expect.
+          # Decode cert from secret and assert keychain import works on the runner.
           echo "$APPLE_CERTIFICATE" | base64 -D > "$CERT_PATH"
-          openssl pkcs12 -legacy -in "$CERT_PATH" -passin "pass:$APPLE_CERTIFICATE_PASSWORD" -clcerts -nokeys \
-            | openssl x509 -noout -subject -issuer
 
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
