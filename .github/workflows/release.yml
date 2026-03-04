@@ -136,9 +136,10 @@ jobs:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # Notarization is optional; enable only when APPLE_NOTARIZE is "true".
+          APPLE_ID: ${{ secrets.APPLE_NOTARIZE == 'true' && secrets.APPLE_ID || '' }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_NOTARIZE == 'true' && secrets.APPLE_PASSWORD || '' }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_NOTARIZE == 'true' && secrets.APPLE_TEAM_ID || '' }}
         with:
           tauriScript: pnpm tauri
           tagName: ${{ env.RELEASE_TAG }}
