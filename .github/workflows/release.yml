@@ -112,6 +112,8 @@ jobs:
 
           # Decode cert from secret and assert keychain import works on the runner.
           echo "$APPLE_CERTIFICATE" | base64 -D > "$CERT_PATH"
+          ls -lh "$CERT_PATH"
+          shasum -a 256 "$CERT_PATH"
 
           rm -f "$KEYCHAIN_PATH"
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
