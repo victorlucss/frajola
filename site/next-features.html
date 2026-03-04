@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Next Features — Frajola Roadmap</title>
+  <meta name="description" content="Frajola roadmap page: what is shipped, what is pending from the PRD, and the next priorities including export, search, i18n, and git integration.">
+  <link rel="icon" type="image/png" href="assets/icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/roadmap.css">
+</head>
+<body>
+
+  <nav class="nav" id="nav">
+    <div class="nav-inner container">
+      <a href="/" class="nav-logo">
+        <img src="assets/icon.png" alt="" width="28" height="28">
+        <span>Frajola</span>
+      </a>
+      <div class="nav-links" id="nav-links">
+        <a href="index.html#features">Features</a>
+        <a href="index.html#privacy">Processing</a>
+        <a href="next-features.html" class="active">Roadmap</a>
+        <a href="docs/">Docs</a>
+      </div>
+      <a href="index.html#download" class="nav-cta btn btn-primary btn-sm">Download</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">
+        <span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <section class="roadmap-hero">
+    <div class="container">
+      <h1 class="fade-up">Next Features Roadmap</h1>
+      <p class="fade-up">Snapshot date: March 4, 2026. This page mirrors the PRD status review: shipped items are marked complete, pending items are explicit, and upcoming milestones are scoped.</p>
+      <div class="roadmap-actions fade-up">
+        <a href="docs/" class="btn btn-primary btn-md">Read Docs</a>
+        <a href="index.html" class="btn btn-ghost btn-md">Back to Home</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <p class="section-label fade-up">Shipped</p>
+      <p class="section-headline fade-up">Completed and usable now.</p>
+      <div class="roadmap-grid">
+        <article class="roadmap-card fade-up" data-delay="1">
+          <span class="status-pill status-pill--done">Completed</span>
+          <h3>Onboarding Flow</h3>
+          <p>First-run setup with proactive permission checks, Whisper setup, Ollama setup, skip-AI path, and overlay guidance.</p>
+          <ul>
+            <li>macOS permission cards with live status</li>
+            <li>Whisper model download in-flow</li>
+            <li>Ollama install/start/check + model pull</li>
+          </ul>
+        </article>
+
+        <article class="roadmap-card fade-up" data-delay="2">
+          <span class="status-pill status-pill--done">Completed</span>
+          <h3>Core Recording + Transcription</h3>
+          <p>Mic + system audio recording, pause/resume, local WAV files, and Whisper transcription pipeline.</p>
+          <ul>
+            <li>Background transcription after stop</li>
+            <li>Whisper model management in settings</li>
+            <li>Re-transcribe from meeting detail</li>
+          </ul>
+        </article>
+
+        <article class="roadmap-card fade-up" data-delay="3">
+          <span class="status-pill status-pill--done">Completed</span>
+          <h3>AI Summaries + Overlay</h3>
+          <p>AI summaries via Ollama/OpenAI/Anthropic plus floating overlay controls for recording outside the main window.</p>
+          <ul>
+            <li>Model presets including Qwen 3.5 option</li>
+            <li>Transcription-only mode supported</li>
+            <li>Main/overlay recording state sync</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <p class="section-label fade-up">Not Completed</p>
+      <p class="section-headline fade-up">High-impact PRD gaps.</p>
+      <div class="roadmap-grid">
+        <article class="roadmap-card fade-up" data-delay="1">
+          <span class="status-pill status-pill--todo">Not Completed</span>
+          <h3>Search, Filters, Export</h3>
+          <p>Library browsing exists, but search/filter/export workflows are still missing from UI and commands.</p>
+          <ul>
+            <li>FTS-backed meeting search UI</li>
+            <li>Date range filters</li>
+            <li>Markdown/PDF/clipboard export</li>
+          </ul>
+        </article>
+
+        <article class="roadmap-card fade-up" data-delay="2">
+          <span class="status-pill status-pill--todo">Not Completed</span>
+          <h3>Language + Platform Completion</h3>
+          <p>The app is currently English-first and macOS-tuned; i18n and broader platform validation remain.</p>
+          <ul>
+            <li>Full UI i18n framework (en + pt-BR)</li>
+            <li>System language detection and switching</li>
+            <li>Windows/Linux validation matrix</li>
+          </ul>
+        </article>
+
+        <article class="roadmap-card fade-up" data-delay="3">
+          <span class="status-pill status-pill--todo">Not Completed</span>
+          <h3>Operational Integrations</h3>
+          <p>Requested automation and developer workflow integrations are planned but not implemented.</p>
+          <ul>
+            <li>Git integration for audio/transcripts/notes</li>
+            <li>Hardware-aware model recommendation</li>
+            <li>Guaranteed audio-file deletion on meeting delete</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <p class="section-label fade-up">PRD Tracker</p>
+      <p class="section-headline fade-up">Feature-by-feature status.</p>
+      <div class="roadmap-table-wrap fade-up">
+        <table class="roadmap-table">
+          <thead>
+            <tr>
+              <th>Feature Area</th>
+              <th>Status</th>
+              <th>Current Reality</th>
+              <th>Next Milestone</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Audio Recording</td>
+              <td>Completed</td>
+              <td>Mic + system capture, pause/resume, overlay control</td>
+              <td>Cross-platform validation hardening</td>
+            </tr>
+            <tr>
+              <td>Transcription</td>
+              <td>Partially Completed</td>
+              <td>Local Whisper path is live</td>
+              <td>Cloud transcription fallback</td>
+            </tr>
+            <tr>
+              <td>AI Meeting Notes</td>
+              <td>Completed</td>
+              <td>Ollama + OpenAI + Anthropic summaries</td>
+              <td>Model recommendation logic</td>
+            </tr>
+            <tr>
+              <td>Meeting Library</td>
+              <td>Partially Completed</td>
+              <td>Browse/detail/audio playback/re-transcribe</td>
+              <td>Search and filters</td>
+            </tr>
+            <tr>
+              <td>Export</td>
+              <td>Not Completed</td>
+              <td>No export actions yet</td>
+              <td>Markdown, PDF, clipboard</td>
+            </tr>
+            <tr>
+              <td>i18n</td>
+              <td>Not Completed</td>
+              <td>English-first interface</td>
+              <td>pt-BR UI + runtime language switch</td>
+            </tr>
+            <tr>
+              <td>Git Integration</td>
+              <td>Not Completed</td>
+              <td>No repo sync workflow yet</td>
+              <td>Commit/push artifacts from app</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="git-integration">
+    <div class="container">
+      <p class="section-label fade-up">Upcoming Focus</p>
+      <p class="section-headline fade-up">Git Integration Proposal</p>
+      <p class="section-subtitle fade-up">Planned workflow: connect a repository and push audio, transcripts, and AI notes with conventional commit messages.</p>
+      <div class="roadmap-grid">
+        <article class="roadmap-card fade-up" data-delay="1">
+          <span class="status-pill status-pill--progress">Designing</span>
+          <h3>Repository Setup</h3>
+          <ul>
+            <li>Choose local folder or clone URL</li>
+            <li>Branch and commit strategy controls</li>
+            <li>Per-artifact include/exclude rules</li>
+          </ul>
+        </article>
+        <article class="roadmap-card fade-up" data-delay="2">
+          <span class="status-pill status-pill--progress">Designing</span>
+          <h3>Artifact Pipeline</h3>
+          <ul>
+            <li>Organize audio/transcript/notes file layout</li>
+            <li>Commit per meeting or batch per day</li>
+            <li>Redaction and privacy confirmation gate</li>
+          </ul>
+        </article>
+        <article class="roadmap-card fade-up" data-delay="3">
+          <span class="status-pill status-pill--progress">Designing</span>
+          <h3>Push Automation</h3>
+          <ul>
+            <li>Background push with conflict handling</li>
+            <li>Auth via existing git credentials</li>
+            <li>Audit log in app UI</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <img src="assets/icon.png" alt="" width="24" height="24">
+        <span>Frajola</span>
+      </div>
+      <nav class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="docs/">Docs</a>
+        <a href="next-features.html">Next Features</a>
+      </nav>
+      <p class="footer-copy">Made in Brazil.</p>
+    </div>
+  </footer>
+
+  <script defer src="js/animations.js"></script>
+  <script defer src="js/nav.js"></script>
+</body>
+</html>
