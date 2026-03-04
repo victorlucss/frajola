@@ -26,6 +26,23 @@ Frajola is a **free, open-source desktop app** built with Tauri v2 that records 
 
 **Key principle:** Everything runs locally by default. Cloud is opt-in, never the default.
 
+## Delivery Status (as of 2026-03-04)
+
+| Area | Status | Notes |
+|------|--------|-------|
+| First-run onboarding | ✅ Completed | Mode selection, proactive macOS permission checks, Whisper setup, Ollama setup, skip-AI path, overlay usage tips |
+| Audio recording pipeline | ✅ Completed | Mic + system audio capture, pause/resume, WAV local storage |
+| Local transcription (Whisper) | ✅ Completed | `tiny/base/small/medium` model management and background transcription |
+| AI summaries | ✅ Completed | Ollama local by default, OpenAI/Anthropic opt-in for summaries |
+| Overlay controls | ✅ Completed | Floating overlay appears when app is minimized/hidden and can control recording |
+| Meeting library browsing | ✅ Completed | Meeting list + detail view with transcript, summary, action items, and audio player |
+| Meeting search & filters | ❌ Not completed | FTS is in schema, but no user-facing search/filter UI yet |
+| Export (Markdown/PDF/clipboard) | ❌ Not completed | Not implemented |
+| UI i18n (en + pt-BR) | ❌ Not completed | Interface is currently English-only |
+| Cloud transcription (OpenAI Whisper API) | ❌ Not completed | Transcription is currently local-only |
+| Hardware-based model recommendation | ❌ Not completed | Planned |
+| Git integration for artifacts | ❌ Not completed | Planned |
+
 ## Target Users
 
 ### Primary Persona: Privacy-Conscious Technical User
@@ -48,32 +65,32 @@ Frajola is a **free, open-source desktop app** built with Tauri v2 that records 
 **User Story:** As a user, I want to record my meeting audio so I can review it later.
 
 **Requirements:**
-- Capture system audio (meeting output) and microphone simultaneously
-- Support for Windows, macOS, and Linux
-- Visual indicator showing recording is active
-- Manual start/stop recording
-- Pause/resume recording
+- [x] Capture system audio (meeting output) and microphone simultaneously
+- [ ] Support for Windows, macOS, and Linux (architecture exists, validation is still pending)
+- [x] Visual indicator showing recording is active
+- [x] Manual start/stop recording
+- [x] Pause/resume recording
 
 **Acceptance Criteria:**
-- [ ] Recording captures both system audio and microphone
+- [x] Recording captures both system audio and microphone
 - [ ] Audio quality is clear and intelligible
-- [ ] Recording indicator is always visible when active
-- [ ] Recordings are saved locally as WAV files with timestamps
+- [x] Recording indicator is always visible when active
+- [x] Recordings are saved locally as WAV files with timestamps
 
 ### 2. Transcription
 **User Story:** As a user, I want my recording transcribed so I can read and search it.
 
 **Requirements:**
-- Convert audio to text with high accuracy
-- **Languages:** English and Portugues Brasileiro (MVP)
-- Timestamps for each segment
-- Auto-detect language or manual selection
-- Local transcription via whisper-rs (default)
-- Cloud transcription via OpenAI Whisper API (opt-in)
+- [x] Convert audio to text locally via whisper-rs
+- [ ] **Languages:** English and Portugues Brasileiro (MVP) with validated QA targets
+- [x] Timestamps for each segment
+- [x] Auto-detect language (manual selection UX not implemented)
+- [x] Local transcription via whisper-rs (default)
+- [ ] Cloud transcription via OpenAI Whisper API (opt-in)
 
 **Acceptance Criteria:**
 - [ ] Transcription accuracy > 90% for clear audio
-- [ ] Works with English and Portuguese audio
+- [ ] Works with English and Portuguese audio (formal acceptance test suite pending)
 - [ ] Timestamps are included every 30 seconds or on pause detection
 - [ ] Transcription completes within ~2x audio duration (local)
 
@@ -83,11 +100,11 @@ Frajola is a **free, open-source desktop app** built with Tauri v2 that records 
 **User Story:** As a user, I want AI-generated meeting notes so I can quickly understand key points.
 
 **Requirements:**
-- Generate structured summary from transcript
-- Extract action items with assignees (if mentioned)
-- Identify key decisions made
-- Highlight important topics discussed
-- Default to Ollama (local), with cloud APIs opt-in
+- [x] Generate structured summary from transcript
+- [x] Extract action items with assignees (if mentioned)
+- [x] Identify key decisions made
+- [x] Highlight important topics discussed
+- [x] Default to Ollama (local), with OpenAI/Anthropic APIs opt-in for summaries
 
 **Output Format:**
 ```markdown
@@ -116,33 +133,46 @@ Brief 2-3 sentence overview of the meeting.
 **User Story:** As a user, I want to browse and search my past meetings.
 
 **Requirements:**
-- List all recorded meetings with date, duration, title
-- Full-text search across transcripts and notes (FTS5)
-- Filter by date range
-- Delete recordings permanently (CASCADE deletes all related data)
+- [x] List all recorded meetings with date, duration, title
+- [ ] Full-text search across transcripts and notes (FTS5)
+- [ ] Filter by date range
+- [ ] Delete recordings permanently (DB rows delete; audio file cleanup still pending)
 
 ### 5. Export
 **User Story:** As a user, I want to export my notes to share with others.
 
 **Requirements:**
-- Export to Markdown (.md)
-- Export to PDF
-- Copy to clipboard
+- [ ] Export to Markdown (.md)
+- [ ] Export to PDF
+- [ ] Copy to clipboard
 
 ### 6. Multilingual Support (i18n)
 **User Story:** As a Brazilian user, I want the app in Portuguese so I can use it comfortably.
 
 **Requirements:**
-- App UI available in English and Portugues Brasileiro
-- Auto-detect system language
-- Manual language selection in settings
-- AI-generated notes in the same language as the meeting
+- [ ] App UI available in English and Portugues Brasileiro
+- [ ] Auto-detect system language
+- [ ] Manual language selection in settings
+- [ ] AI-generated notes in the same language as the meeting
 
 **Acceptance Criteria:**
 - [ ] All UI strings are translatable (i18n framework)
 - [ ] App detects system language and sets default
 - [ ] User can switch language in settings
 - [ ] AI summaries match meeting language
+
+### 7. First-Run Onboarding
+**User Story:** As a first-time user, I want guided setup so I can record quickly without manual troubleshooting.
+
+**Requirements:**
+- [x] First launch opens a guided onboarding flow
+- [x] Proactive macOS permission checks on the permission cards
+- [x] Whisper model selection with recommended default
+- [x] Ollama setup flow (install/start/check status)
+- [x] Ollama model selection from light to heavy presets (including Qwen options)
+- [x] Ability to skip AI and continue in transcription-only mode
+- [x] Overlay-only usage guidance (minimize/close main window behavior)
+- [ ] Recommend best AI model using user hardware/system info
 
 ## Non-Goals (MVP)
 
@@ -162,9 +192,9 @@ These are explicitly out of scope for v1.0:
 ## Technical Constraints
 
 ### Platform Requirements
-- Windows 10+ (x64)
-- macOS 12+ (Intel and Apple Silicon)
-- Linux (Ubuntu 20.04+, Fedora 35+)
+- Windows 10+ (x64) — target, not fully validated yet
+- macOS 14.2+ (Intel and Apple Silicon) — current implemented baseline in Tauri config
+- Linux (Ubuntu 20.04+, Fedora 35+) — target, not fully validated yet
 
 ### Audio Capture (Highest Risk)
 - **Windows:** cpal + WASAPI loopback — native support, no permissions needed
@@ -246,6 +276,15 @@ These are explicitly out of scope for v1.0:
 - Beta release
 
 **Total: 14-18 weeks to MVP**
+
+### Phase Completion Snapshot (as of 2026-03-04)
+- [x] Phase 1: Scaffolding + Landing Page
+- [x] Phase 2: Audio Capture PoC (core functionality)
+- [x] Phase 3: UI Shell + Meeting Library (browse/detail flows)
+- [ ] Phase 4: Transcription Pipeline (cloud fallback + search still pending)
+- [x] Phase 5: AI Summarization
+- [ ] Phase 6: Export + Polish (export not started)
+- [ ] Phase 7: i18n + Packaging
 
 ## Technical Honesty Notes
 
