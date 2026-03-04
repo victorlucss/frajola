@@ -99,12 +99,35 @@ pnpm tauri build
 - [Ollama](https://ollama.com/) (for local AI notes)
 - Platform-specific: see [Tech Research](./docs/TECH_RESEARCH.md)
 
+## Releasing Downloadable Builds
+
+Release automation is configured via GitHub Actions:
+
+- Workflow: [`.github/workflows/release.yml`](./.github/workflows/release.yml)
+- Trigger: push a tag like `v0.1.0`
+- Output: installers uploaded to GitHub Releases (macOS arm/intel, Windows, Linux)
+
+Quick release flow:
+
+```bash
+# 1) bump versions in package.json + src-tauri/tauri.conf.json
+
+# 2) create tag
+git tag v0.1.0
+
+# 3) push tag to trigger release build/upload
+git push origin v0.1.0
+```
+
+Detailed signing/notarization setup is documented in [Release Guide](./docs/RELEASES.md).
+
 ## Documentation
 
 - [Architecture](./docs/ARCHITECTURE.md) — System design, DB schema, project structure
 - [Product Requirements](./docs/PRD.md) — Features, timeline, technical decisions
 - [Tech Research](./docs/TECH_RESEARCH.md) — Audio capture, Whisper, AI integration
 - [Competitive Analysis](./docs/COMPETITIVE_ANALYSIS.md) — Market positioning
+- [Release Guide](./docs/RELEASES.md) — CI release workflow, tags, and signing secrets
 
 ## License
 
