@@ -14,7 +14,7 @@ export default function Sidebar({ meetings, selectedId, onSelect, isDemo, record
   const groups = groupByDate(meetings);
 
   return (
-    <div className="flex h-full flex-col border-r border-border bg-bg">
+    <div className="flex h-full flex-col border-r border-border bg-bg/72">
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between px-4 py-4">
         <h2 className="text-sm font-semibold text-text-primary">Meetings</h2>

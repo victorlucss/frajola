@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { listen } from "@tauri-apps/api/event";
 import { isTauri, invoke } from "../lib/tauri";
 import type { Meeting } from "../types";
 
@@ -12,7 +13,13 @@ interface StartRecordingResult {
   meeting: Meeting;
 }
 
-interface UseRecordingReturn {
+interface RecordingStatusResult {
+  meeting_id: number;
+  elapsed_seconds: number;
+  is_paused: boolean;
+}
+
+export interface UseRecordingReturn {
   status: RecordingStatus;
   meetingId: number | null;
   elapsedSeconds: number;
@@ -29,6 +36,8 @@ export function useRecording(options?: UseRecordingOptions): UseRecordingReturn 
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Track whether this window initiated the action, to avoid double-processing events
+  const localActionRef = useRef(false);
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
@@ -37,6 +46,13 @@ export function useRecording(options?: UseRecordingOptions): UseRecordingReturn 
     }
   }, []);
 
+  const startTimer = useCallback(() => {
+    clearTimer();
+    timerRef.current = setInterval(() => {
+      setElapsedSeconds((s) => s + 1);
+    }, 1000);
+  }, [clearTimer]);
+
   const startRecording = useCallback(async (micDeviceId?: string) => {
     if (!isTauri()) {
       setError("Recording is only available in the desktop app");
@@ -44,6 +60,7 @@ export function useRecording(options?: UseRecordingOptions): UseRecordingReturn 
     }
 
     setError(null);
+    localActionRef.current = true;
     try {
       const result = await invoke<StartRecordingResult>("start_recording", {
         micDeviceId: micDeviceId ?? null,
@@ -52,17 +69,18 @@ export function useRecording(options?: UseRecordingOptions): UseRecordingReturn 
       setMeetingId(result.meeting.id);
       setStatus("recording");
       setElapsedSeconds(0);
-      timerRef.current = setInterval(() => {
-        setElapsedSeconds((s) => s + 1);
-      }, 1000);
+      startTimer();
     } catch (err) {
       setError(String(err));
+    } finally {
+      localActionRef.current = false;
     }
-  }, []);
+  }, [startTimer]);
 
   const stopRecording = useCallback(async () => {
     clearTimer();
     setStatus("stopping");
+    localActionRef.current = true;
     try {
       const meeting = await invoke<Meeting>("stop_recording");
       setStatus("idle");
@@ -72,30 +90,125 @@ export function useRecording(options?: UseRecordingOptions): UseRecordingReturn 
     } catch (err) {
       setError(String(err));
       setStatus("idle");
+    } finally {
+      localActionRef.current = false;
     }
-  }, [clearTimer, options]);
+  }, [clearTimer, options, startTimer]);
 
   const pauseRecording = useCallback(async () => {
     clearTimer();
+    localActionRef.current = true;
     try {
       await invoke<void>("pause_recording");
       setStatus("paused");
     } catch (err) {
       setError(String(err));
+    } finally {
+      localActionRef.current = false;
     }
   }, [clearTimer]);
 
   const resumeRecording = useCallback(async () => {
+    localActionRef.current = true;
     try {
       await invoke<void>("resume_recording");
       setStatus("recording");
-      timerRef.current = setInterval(() => {
-        setElapsedSeconds((s) => s + 1);
-      }, 1000);
+      startTimer();
     } catch (err) {
       setError(String(err));
+    } finally {
+      localActionRef.current = false;
     }
-  }, []);
+  }, [startTimer]);
+
+  const syncStatusFromBackend = useCallback(async () => {
+    if (!isTauri() || localActionRef.current) return;
+    try {
+      const result = await invoke<RecordingStatusResult | null>("get_recording_status");
+      if (!result) {
+        clearTimer();
+        setStatus("idle");
+        setMeetingId(null);
+        setElapsedSeconds(0);
+        return;
+      }
+
+      setMeetingId(result.meeting_id);
+      setElapsedSeconds(result.elapsed_seconds);
+      if (result.is_paused) {
+        clearTimer();
+        setStatus("paused");
+      } else {
+        setStatus("recording");
+        startTimer();
+      }
+    } catch {
+      // Best effort sync only.
+    }
+  }, [clearTimer, startTimer]);
+
+  // Cross-window event sync
+  useEffect(() => {
+    if (!isTauri()) return;
+
+    const unlisteners = [
+      listen<{ meeting_id: number }>("recording-started", (event) => {
+        if (localActionRef.current) return;
+        setMeetingId(event.payload.meeting_id);
+        setStatus("recording");
+        setElapsedSeconds(0);
+        startTimer();
+      }),
+      listen<{ meeting_id: number }>("recording-stopped", () => {
+        if (localActionRef.current) return;
+        clearTimer();
+        setStatus("idle");
+        setMeetingId(null);
+        setElapsedSeconds(0);
+      }),
+      listen<void>("recording-paused", () => {
+        if (localActionRef.current) return;
+        clearTimer();
+        setStatus("paused");
+      }),
+      listen<void>("recording-resumed", () => {
+        if (localActionRef.current) return;
+        setStatus("recording");
+        startTimer();
+      }),
+    ];
+
+    return () => {
+      unlisteners.forEach((p) => p.then((f) => f()));
+    };
+  }, [clearTimer, startTimer]);
+
+  // Initial state hydration — pick up any in-progress recording
+  useEffect(() => {
+    void syncStatusFromBackend();
+  }, [syncStatusFromBackend]);
+
+  // Recover if cross-window events are missed while this window is hidden/minimized.
+  useEffect(() => {
+    if (!isTauri()) return;
+
+    const onFocus = () => {
+      void syncStatusFromBackend();
+    };
+    const onVisibilityChange = () => {
+      if (!document.hidden) {
+        void syncStatusFromBackend();
+      }
+    };
+
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [syncStatusFromBackend]);
 
   useEffect(() => {
     return () => clearTimer();

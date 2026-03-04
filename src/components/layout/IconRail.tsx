@@ -13,16 +13,12 @@ const navItems: { icon: IconName; label: string }[] = [
   { icon: "home", label: "Home" },
 ];
 
-const placeholderItems: { icon: IconName; label: string }[] = [
-  { icon: "calendar", label: "Calendar" },
-  { icon: "search", label: "Search" },
-];
 
 export default function IconRail({ onNewRecording, onSettingsToggle, settingsOpen, isRecording }: Props) {
   return (
-    <div className="flex h-full w-12 flex-col items-center border-r border-border bg-surface py-3">
+    <div className="flex h-full w-12 flex-col items-center border-r border-border bg-surface/72 py-2">
       {/* Logo */}
-      <div className="mb-4 flex h-8 w-8 items-center justify-center">
+      <div className="mb-3 flex h-8 w-8 items-center justify-center">
         <img
           src={frajolaLogo}
           alt="Frajola"
@@ -37,15 +33,6 @@ export default function IconRail({ onNewRecording, onSettingsToggle, settingsOpe
             key={item.label}
             title={item.label}
             className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors bg-accent-glow text-accent"
-          >
-            <Icon name={item.icon} size={18} />
-          </button>
-        ))}
-        {placeholderItems.map((item) => (
-          <button
-            key={item.label}
-            title={`${item.label} (coming soon)`}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted cursor-not-allowed"
           >
             <Icon name={item.icon} size={18} />
           </button>
@@ -74,7 +61,7 @@ export default function IconRail({ onNewRecording, onSettingsToggle, settingsOpe
               </svg>
             </span>
           ) : (
-            <Icon name="plus" size={18} />
+            <span className="h-3.5 w-3.5 rounded-full bg-red-500" />
           )}
         </button>
         <button

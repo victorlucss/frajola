@@ -53,3 +53,20 @@ body {
   background: var(--color-accent-glow);
   color: var(--color-text-primary);
 }
+
+/* Overlay mode — transparent background for floating widget */
+html.overlay-mode,
+html.overlay-mode body,
+html.overlay-mode #root {
+  background: transparent !important;
+  background-color: transparent !important;
+  overflow: visible;
+}
+
+/* Main desktop window vibrancy mode */
+html.vibrancy-mode,
+html.vibrancy-mode body,
+html.vibrancy-mode #root {
+  background: transparent !important;
+  background-color: transparent !important;
+}

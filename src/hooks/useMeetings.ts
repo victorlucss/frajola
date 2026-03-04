@@ -42,10 +42,15 @@ export function useMeetings(): UseMeetingsResult {
     load();
   }, [load]);
 
-  // Auto-refresh when transcription/summarization completes
+  // Auto-refresh when backend processing or recording lifecycle events happen.
   useEffect(() => {
     if (!isTauri()) return;
-    const events = ["transcription-complete", "summarization-complete"];
+    const events = [
+      "recording-started",
+      "recording-stopped",
+      "transcription-complete",
+      "summarization-complete",
+    ];
     const unlisteners = events.map((event) =>
       listen(event, () => {
         load();
