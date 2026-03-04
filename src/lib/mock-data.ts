@@ -22,7 +22,6 @@ export const mockMeetings: Meeting[] = [
     duration_seconds: 2700,
     language: "en",
     status: "complete",
-    is_demo: true,
   },
   {
     id: 9002,
@@ -32,7 +31,6 @@ export const mockMeetings: Meeting[] = [
     duration_seconds: 1800,
     language: "en",
     status: "complete",
-    is_demo: true,
   },
   {
     id: 9003,
@@ -42,7 +40,6 @@ export const mockMeetings: Meeting[] = [
     duration_seconds: 3600,
     language: "en",
     status: "complete",
-    is_demo: true,
   },
   {
     id: 9004,
@@ -52,7 +49,6 @@ export const mockMeetings: Meeting[] = [
     duration_seconds: 2400,
     language: "en",
     status: "complete",
-    is_demo: true,
   },
   {
     id: 9005,
@@ -62,7 +58,6 @@ export const mockMeetings: Meeting[] = [
     duration_seconds: 4500,
     language: "en",
     status: "complete",
-    is_demo: true,
   },
   {
     id: 9006,
@@ -72,7 +67,6 @@ export const mockMeetings: Meeting[] = [
     duration_seconds: 1500,
     language: "pt-BR",
     status: "complete",
-    is_demo: true,
   },
 ];
 

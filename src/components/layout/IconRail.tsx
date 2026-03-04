@@ -16,7 +16,7 @@ const navItems: { icon: IconName; label: string }[] = [
 
 export default function IconRail({ onNewRecording, onSettingsToggle, settingsOpen, isRecording }: Props) {
   return (
-    <div className="flex h-full w-12 flex-col items-center border-r border-border bg-surface/72 py-2">
+    <div className="flex h-full w-12 flex-col items-center border-r border-border bg-surface py-2">
       {/* Logo */}
       <div className="mb-3 flex h-8 w-8 items-center justify-center">
         <img

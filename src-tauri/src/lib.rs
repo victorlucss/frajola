@@ -13,6 +13,8 @@ use std::sync::Mutex;
 use audio::state::RecordingState;
 use db::Database;
 use tauri::{Manager, RunEvent};
+#[cfg(not(target_os = "macos"))]
+use tauri::WebviewWindow;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -46,6 +48,15 @@ pub fn run() {
             app.manage(RecordingState {
                 active: Mutex::new(None),
             });
+
+            // On non-macOS: use native decorations and clear vibrancy effects
+            #[cfg(not(target_os = "macos"))]
+            {
+                if let Some(win) = app.get_webview_window("main") {
+                    let _ = win.set_decorations(true);
+                    let _ = win.clear_effects();
+                }
+            }
 
             // Start meeting detection loop
             let handle = app.handle().clone();

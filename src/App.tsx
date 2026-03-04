@@ -1,10 +1,12 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import type { MeetingDetail as MeetingDetailType } from "./types";
 import { getMockDetail } from "./lib/mock-data";
+import { isForcedMockModeFromUrl } from "./lib/mock-mode";
 import { isTauri, invoke } from "./lib/tauri";
 import { useMeetings } from "./hooks/useMeetings";
 import { useMeetingDetail } from "./hooks/useMeetingDetail";
 import { useRecording } from "./hooks/useRecording";
+import { useTheme } from "./hooks/useTheme";
 
 import AppShell from "./components/layout/AppShell";
 import IconRail from "./components/layout/IconRail";
@@ -17,12 +19,14 @@ import SettingsPage from "./components/settings/SettingsPage";
 import OnboardingFlow from "./components/onboarding/OnboardingFlow";
 
 function App() {
+  useTheme();
+  const [forceMockMode, setForceMockMode] = useState(() => isForcedMockModeFromUrl());
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedMeetingId, setSelectedMeetingId] = useState<number | null>(null);
   const [onboardingReady, setOnboardingReady] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
-  const { meetings, isDemo, refresh } = useMeetings();
+  const { meetings, refresh } = useMeetings({ forceMock: forceMockMode });
 
   const recording = useRecording({
     onComplete: async (meeting) => {
@@ -38,7 +42,9 @@ function App() {
     },
   });
 
-  const { detail: realDetail, refresh: refreshDetail } = useMeetingDetail(selectedMeetingId);
+  const { detail: realDetail, refresh: refreshDetail } = useMeetingDetail(selectedMeetingId, {
+    forceMock: forceMockMode,
+  });
 
   const meetingDetail: MeetingDetailType | null = useMemo(() => {
     if (!selectedMeetingId) return null;
@@ -83,27 +89,70 @@ function App() {
   const toggleSettings = useCallback(() => setSettingsOpen((o) => !o), []);
 
   useEffect(() => {
+    const urlForcedMock = isForcedMockModeFromUrl();
+
     if (!isTauri()) {
+      setForceMockMode(urlForcedMock);
       setOnboardingReady(true);
       setShowOnboarding(false);
       return;
     }
 
-    invoke<string | null>("get_setting", { key: "onboarding_completed" })
-      .then((v) => {
-        setShowOnboarding(v !== "1");
+    Promise.all([
+      invoke<string | null>("get_setting", { key: "onboarding_completed" }).catch(() => null),
+      invoke<string | null>("get_setting", { key: "mock_mode" }).catch(() => null),
+    ])
+      .then(([onboardingCompleted, mockMode]) => {
+        const enabledMockMode = urlForcedMock || mockMode === "1";
+        setForceMockMode(enabledMockMode);
+        setShowOnboarding(enabledMockMode ? false : onboardingCompleted !== "1");
       })
       .catch(() => {
-        setShowOnboarding(true);
+        setForceMockMode(urlForcedMock);
+        setShowOnboarding(!urlForcedMock);
       })
       .finally(() => {
         setOnboardingReady(true);
       });
   }, []);
 
+  useEffect(() => {
+    const onMockModeChanged = (event: Event) => {
+      const detail = (event as CustomEvent<boolean>).detail;
+      setForceMockMode(Boolean(detail));
+      if (detail) {
+        setShowOnboarding(false);
+      }
+    };
+
+    window.addEventListener("mock-mode-changed", onMockModeChanged);
+    return () => window.removeEventListener("mock-mode-changed", onMockModeChanged);
+  }, []);
+
+  useEffect(() => {
+    if (!forceMockMode) return;
+    if (meetings.length === 0) return;
+
+    const hasSelected = selectedMeetingId !== null && meetings.some((m) => m.id === selectedMeetingId);
+    if (!hasSelected) {
+      setSelectedMeetingId(meetings[0].id);
+    }
+  }, [forceMockMode, meetings, selectedMeetingId]);
+
+  useEffect(() => {
+    if (forceMockMode) return;
+    if (selectedMeetingId === null) return;
+    if (meetings.length === 0) return;
+
+    const hasSelected = meetings.some((m) => m.id === selectedMeetingId);
+    if (!hasSelected) {
+      setSelectedMeetingId(meetings[0].id);
+    }
+  }, [forceMockMode, meetings, selectedMeetingId]);
+
   if (!onboardingReady) {
     return (
-      <div className="h-screen w-screen bg-bg-base flex items-center justify-center text-sm text-text-tertiary">
+      <div className="h-screen w-screen bg-bg flex items-center justify-center text-sm text-text-tertiary">
         Loading...
       </div>
     );
@@ -125,7 +174,6 @@ function App() {
             meetings={meetings}
             selectedId={selectedMeetingId}
             onSelect={setSelectedMeetingId}
-            isDemo={isDemo}
             recordingIndicator={
               isRecordingActive ? (
                 <RecordingIndicator
@@ -161,7 +209,7 @@ function App() {
         }
       />
       {settingsOpen && <SettingsPage onClose={() => setSettingsOpen(false)} />}
-      {showOnboarding && (
+      {showOnboarding && !forceMockMode && (
         <OnboardingFlow
           onComplete={() => {
             setShowOnboarding(false);

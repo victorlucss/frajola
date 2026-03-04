@@ -2,12 +2,12 @@ use tauri::Manager;
 
 use crate::error::AppError;
 
-const COMPACT_PILL_SIZE: f64 = 40.0;
-const IDLE_PILL_WIDTH: f64 = 100.0;
-const RECORDING_PILL_WIDTH: f64 = 140.0;
-const PILL_HEIGHT: f64 = 40.0;
-const EXPANDED_WIDTH: f64 = 320.0;
-const EXPANDED_HEIGHT: f64 = 280.0;
+const COMPACT_PILL_SIZE: f64 = 48.0;
+const IDLE_PILL_WIDTH: f64 = 118.0;
+const RECORDING_PILL_WIDTH: f64 = 160.0;
+const PILL_HEIGHT: f64 = 48.0;
+const EXPANDED_WIDTH: f64 = 213.0;
+const EXPANDED_HEIGHT: f64 = 187.0;
 
 fn set_overlay_size(window: &tauri::WebviewWindow, width: f64, height: f64) -> Result<(), AppError> {
     window

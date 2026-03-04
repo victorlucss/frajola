@@ -16,20 +16,13 @@ export default function MeetingListItem({ meeting, selected, onClick }: Props) {
       }`}
     >
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span
-            className={`truncate text-sm font-medium ${
-              selected ? "text-text-primary" : "text-text-secondary"
-            }`}
-          >
-            {meeting.title}
-          </span>
-          {meeting.is_demo && (
-            <span className="shrink-0 rounded bg-accent-glow px-1.5 py-0.5 text-[10px] font-medium text-accent">
-              Demo
-            </span>
-          )}
-        </div>
+        <span
+          className={`block truncate text-sm font-medium ${
+            selected ? "text-text-primary" : "text-text-secondary"
+          }`}
+        >
+          {meeting.title}
+        </span>
         {meeting.subtitle && (
           <p className="truncate text-xs text-text-tertiary">
             {meeting.subtitle}

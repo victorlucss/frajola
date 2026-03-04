@@ -137,11 +137,12 @@ pub async fn check_ollama_status() -> OllamaStatus {
 }
 
 fn command_exists(cmd: &str) -> bool {
-    Command::new("which")
-        .arg(cmd)
-        .output()
-        .map(|o| o.status.success())
-        .unwrap_or(false)
+    #[cfg(target_os = "windows")]
+    let check = Command::new("where").arg(cmd).output();
+    #[cfg(not(target_os = "windows"))]
+    let check = Command::new("which").arg(cmd).output();
+
+    check.map(|o| o.status.success()).unwrap_or(false)
 }
 
 #[cfg(target_os = "macos")]
@@ -191,7 +192,13 @@ fn install_ollama_with_homebrew() -> OllamaInstallResult {
 pub async fn install_ollama() -> Result<OllamaInstallResult, AppError> {
     tokio::task::spawn_blocking(|| {
         if command_exists("ollama") {
-            let _ = Command::new("open").args(["-a", "Ollama"]).spawn();
+            #[cfg(target_os = "macos")]
+            { let _ = Command::new("open").args(["-a", "Ollama"]).spawn(); }
+            #[cfg(target_os = "windows")]
+            { let _ = Command::new("cmd").args(["/C", "start", "", "ollama"]).spawn(); }
+            #[cfg(target_os = "linux")]
+            { let _ = Command::new("ollama").arg("serve").spawn(); }
+
             return OllamaInstallResult {
                 installed: true,
                 requires_manual: false,
@@ -206,9 +213,11 @@ pub async fn install_ollama() -> Result<OllamaInstallResult, AppError> {
 
         #[cfg(not(target_os = "macos"))]
         {
-            let _ = Command::new("open")
-                .arg("https://ollama.com/download")
-                .spawn();
+            #[cfg(target_os = "windows")]
+            { let _ = Command::new("cmd").args(["/C", "start", "", "https://ollama.com/download"]).spawn(); }
+            #[cfg(target_os = "linux")]
+            { let _ = Command::new("xdg-open").arg("https://ollama.com/download").spawn(); }
+
             OllamaInstallResult {
                 installed: false,
                 requires_manual: true,

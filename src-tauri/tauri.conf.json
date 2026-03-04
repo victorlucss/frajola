@@ -38,11 +38,6 @@
         "decorations": false,
         "transparent": true,
         "shadow": false,
-        "windowEffects": {
-          "effects": ["underWindowBackground"],
-          "state": "active",
-          "radius": 10
-        },
         "alwaysOnTop": true,
         "visible": false,
         "skipTaskbar": true

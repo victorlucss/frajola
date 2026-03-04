@@ -189,6 +189,8 @@ function InputField({
 }
 
 function GeneralSettings({ getSetting, updateSetting }: SettingsSectionProps) {
+  const mockModeEnabled = (getSetting("mock_mode") ?? "0") === "1";
+
   return (
     <div className="space-y-4">
       <SelectField
@@ -199,8 +201,42 @@ function GeneralSettings({ getSetting, updateSetting }: SettingsSectionProps) {
           { value: "light", label: "Light" },
           { value: "dark", label: "Dark" },
         ]}
-        onChange={(v) => updateSetting("theme", v)}
+        onChange={(v) => {
+          void updateSetting("theme", v);
+          window.dispatchEvent(new CustomEvent("theme-changed", { detail: v }));
+        }}
       />
+
+      <div className="rounded-lg border border-border bg-bg-card p-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium text-text-primary">Mock Data Mode</p>
+            <p className="mt-1 text-xs text-text-secondary">
+              Force demo meetings for screenshot sessions.
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              const nextEnabled = !mockModeEnabled;
+              void updateSetting("mock_mode", nextEnabled ? "1" : "0");
+              window.dispatchEvent(
+                new CustomEvent("mock-mode-changed", { detail: nextEnabled }),
+              );
+            }}
+            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+              mockModeEnabled
+                ? "bg-accent text-white hover:bg-accent/90"
+                : "border border-border text-text-secondary hover:bg-bg-card-hover"
+            }`}
+          >
+            {mockModeEnabled ? "Disable" : "Enable"}
+          </button>
+        </div>
+
+        <p className="mt-2 text-[11px] text-text-tertiary">
+          Tip: you can also launch with <span className="font-mono text-text-secondary">?mock=1</span>.
+        </p>
+      </div>
     </div>
   );
 }
@@ -359,7 +395,7 @@ function AiSettings({ getSetting, updateSetting }: SettingsSectionProps) {
         onChange={(v) => updateSetting("ai_provider", v)}
       />
 
-      {provider === "openai" ? (
+      {provider === "openai" && (
         <SelectField
           label="Model"
           value={model || "gpt-4o-mini"}
@@ -372,7 +408,9 @@ function AiSettings({ getSetting, updateSetting }: SettingsSectionProps) {
           ]}
           onChange={(v) => updateSetting("ai_model", v)}
         />
-      ) : (
+      )}
+
+      {provider === "anthropic" && (
         <SelectField
           label="Model"
           value={model || "claude-haiku-4-5-20251001"}
@@ -413,6 +451,7 @@ function AiSettings({ getSetting, updateSetting }: SettingsSectionProps) {
             </div>
           </div>
 
+          {ollamaStatus?.available ? (
           <div className="space-y-3">
             <FieldLabel>Ollama Models</FieldLabel>
             <div className="space-y-2">
@@ -551,6 +590,9 @@ function AiSettings({ getSetting, updateSetting }: SettingsSectionProps) {
               </div>
             )}
           </div>
+          ) : (
+          <OllamaSetup checkOllama={checkOllama} checkingOllama={checkingOllama} />
+          )}
         </>
       )}
 
@@ -574,6 +616,80 @@ function AiSettings({ getSetting, updateSetting }: SettingsSectionProps) {
         />
       )}
       </div>
+    </div>
+  );
+}
+
+/* ── Ollama Setup CTA ── */
+
+function OllamaSetup({
+  checkOllama,
+  checkingOllama,
+}: {
+  checkOllama: () => Promise<void>;
+  checkingOllama: boolean;
+}) {
+  const [installing, setInstalling] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const handleInstall = async () => {
+    setInstalling(true);
+    setMessage(null);
+    try {
+      const result = await invoke<{ installed: boolean; requires_manual: boolean; message: string }>("install_ollama");
+      setMessage(result.message);
+      if (result.installed) {
+        // Give Ollama a moment to start, then re-check
+        setTimeout(() => void checkOllama(), 3000);
+      }
+    } catch (err) {
+      setMessage(String(err));
+    } finally {
+      setInstalling(false);
+    }
+  };
+
+  const handleStart = async () => {
+    setMessage(null);
+    try {
+      await invoke("start_ollama");
+      setMessage("Starting Ollama...");
+      setTimeout(() => void checkOllama(), 3000);
+    } catch (err) {
+      setMessage(String(err));
+    }
+  };
+
+  return (
+    <div className="rounded-lg border border-border bg-bg-card p-4 space-y-3">
+      <p className="text-sm text-text-secondary">
+        Ollama is not running. Install or start it to use local AI models.
+      </p>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={handleInstall}
+          disabled={installing}
+          className="rounded-lg px-3 py-1.5 text-xs font-medium text-white bg-accent hover:bg-accent/90 transition-colors disabled:opacity-50"
+        >
+          {installing ? "Setting up..." : "Complete Ollama Setup"}
+        </button>
+        <button
+          onClick={handleStart}
+          className="rounded-lg px-3 py-1.5 text-xs font-medium border border-border text-text-secondary hover:bg-bg-card-hover transition-colors"
+        >
+          Start Ollama
+        </button>
+        <button
+          onClick={checkOllama}
+          disabled={checkingOllama}
+          className="text-xs text-accent hover:text-accent/80 transition-colors disabled:opacity-50"
+        >
+          Refresh
+        </button>
+      </div>
+      {message && (
+        <p className="text-xs text-text-tertiary">{message}</p>
+      )}
     </div>
   );
 }

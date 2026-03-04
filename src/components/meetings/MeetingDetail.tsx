@@ -39,13 +39,12 @@ export default function MeetingDetail({ detail, onRefresh }: Props) {
   const isTranscribing = detail.meeting.status === "transcribing";
   const isSummarizing = detail.meeting.status === "summarizing";
   const isProcessing = isTranscribing || isSummarizing;
-  const defaultTab: Tab = detail.meeting.is_demo ? "summary" : "transcript";
+  const defaultTab: Tab = "transcript";
   const [activeTab, setActiveTab] = useState<Tab>(defaultTab);
   const [showRetranscribeModal, setShowRetranscribeModal] = useState(false);
 
   const canRetranscribe =
     isTauri() &&
-    !detail.meeting.is_demo &&
     !isProcessing &&
     detail.meeting.audio_path &&
     detail.meeting.status !== "recording";
@@ -116,11 +115,6 @@ export default function MeetingDetail({ detail, onRefresh }: Props) {
           <h1 className="text-lg font-semibold text-text-primary">
             {detail.meeting.title}
           </h1>
-          {detail.meeting.is_demo && (
-            <span className="rounded bg-accent-glow px-2 py-0.5 text-xs font-medium text-accent">
-              Demo
-            </span>
-          )}
           {canRetranscribe && (
             <button
               onClick={() => setShowRetranscribeModal(true)}
@@ -153,7 +147,6 @@ export default function MeetingDetail({ detail, onRefresh }: Props) {
 
         {/* Audio player */}
         {detail.meeting.audio_path &&
-          !detail.meeting.is_demo &&
           detail.meeting.status !== "recording" && (
             <AudioPlayer audioPath={detail.meeting.audio_path} durationSeconds={detail.meeting.duration_seconds} />
           )}

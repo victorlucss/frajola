@@ -6,23 +6,17 @@ interface Props {
   meetings: Meeting[];
   selectedId: number | null;
   onSelect: (id: number) => void;
-  isDemo: boolean;
   recordingIndicator?: React.ReactNode;
 }
 
-export default function Sidebar({ meetings, selectedId, onSelect, isDemo, recordingIndicator }: Props) {
+export default function Sidebar({ meetings, selectedId, onSelect, recordingIndicator }: Props) {
   const groups = groupByDate(meetings);
 
   return (
-    <div className="flex h-full flex-col border-r border-border bg-bg/72">
+    <div className="flex h-full flex-col border-r border-border bg-bg">
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between px-4 py-4">
         <h2 className="text-sm font-semibold text-text-primary">Meetings</h2>
-        {isDemo && (
-          <span className="rounded bg-accent-glow px-2 py-0.5 text-[10px] font-medium text-accent">
-            Demo data
-          </span>
-        )}
       </div>
 
       {/* Recording indicator */}

@@ -22,6 +22,24 @@
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
 }
 
+[data-theme="light"] {
+  color-scheme: light;
+  --color-bg: #eef1f5;
+  --color-bg-elevated: #ffffff;
+  --color-bg-card: #ffffff;
+  --color-bg-card-hover: #f5f7fb;
+  --color-surface: #e8edf3;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #334155;
+  --color-text-tertiary: #64748b;
+  --color-text-muted: #94a3b8;
+  --color-accent: #7b8f36;
+  --color-accent-dim: #62722b;
+  --color-accent-glow: rgba(123, 143, 54, 0.14);
+  --color-border: #d6dde6;
+  --color-border-subtle: #e6ebf2;
+}
+
 /* Global */
 body {
   margin: 0;

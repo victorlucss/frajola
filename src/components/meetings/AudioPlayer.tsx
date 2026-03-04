@@ -18,7 +18,7 @@ export default function AudioPlayer({ audioPath, durationSeconds }: Props) {
   const barRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
-  const [duration, setDuration] = useState(durationSeconds ?? 0);
+  const [duration, setDuration] = useState(Math.max(0, durationSeconds ?? 0));
   const [error, setError] = useState<string | null>(null);
 
   const src = convertFileSrc(audioPath);
@@ -26,6 +26,16 @@ export default function AudioPlayer({ audioPath, durationSeconds }: Props) {
   useEffect(() => {
     const el = audioRef.current;
     if (!el) return;
+
+    // Hard reset state when switching meetings/audio files.
+    // Without this, stale currentTime from previous audio can leak into the new source.
+    setError(null);
+    setPlaying(false);
+    setCurrent(0);
+    setDuration(Math.max(0, durationSeconds ?? 0));
+    el.pause();
+    el.currentTime = 0;
+    el.load();
 
     const onTime = () => setCurrent(el.currentTime);
     const onMeta = () => {
@@ -36,6 +46,7 @@ export default function AudioPlayer({ audioPath, durationSeconds }: Props) {
     const onEnded = () => setPlaying(false);
     const onError = () => {
       setError(`Failed to load audio`);
+      setPlaying(false);
       console.error("[AudioPlayer] error loading:", src, el.error);
     };
 
@@ -44,12 +55,13 @@ export default function AudioPlayer({ audioPath, durationSeconds }: Props) {
     el.addEventListener("ended", onEnded);
     el.addEventListener("error", onError);
     return () => {
+      el.pause();
       el.removeEventListener("timeupdate", onTime);
       el.removeEventListener("loadedmetadata", onMeta);
       el.removeEventListener("ended", onEnded);
       el.removeEventListener("error", onError);
     };
-  }, [src]);
+  }, [src, durationSeconds]);
 
   const toggle = useCallback(() => {
     const el = audioRef.current;
@@ -72,15 +84,18 @@ export default function AudioPlayer({ audioPath, durationSeconds }: Props) {
     (e: React.MouseEvent<HTMLDivElement>) => {
       const el = audioRef.current;
       const bar = barRef.current;
-      if (!el || !bar || !duration) return;
+      if (!el || !bar) return;
+      const effectiveDuration =
+        el.duration && isFinite(el.duration) && el.duration > 0 ? el.duration : duration;
+      if (!effectiveDuration) return;
       const rect = bar.getBoundingClientRect();
       const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-      el.currentTime = ratio * duration;
+      el.currentTime = ratio * effectiveDuration;
     },
     [duration],
   );
 
-  const pct = duration > 0 ? (current / duration) * 100 : 0;
+  const pct = duration > 0 ? Math.max(0, Math.min(100, (current / duration) * 100)) : 0;
 
   if (error) {
     return (

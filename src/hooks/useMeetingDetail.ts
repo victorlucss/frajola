@@ -10,14 +10,24 @@ interface UseMeetingDetailResult {
   refresh: () => Promise<void>;
 }
 
-export function useMeetingDetail(meetingId: number | null): UseMeetingDetailResult {
+interface UseMeetingDetailOptions {
+  forceMock?: boolean;
+}
+
+export function useMeetingDetail(
+  meetingId: number | null,
+  options: UseMeetingDetailOptions = {},
+): UseMeetingDetailResult {
+  const forceMock = options.forceMock ?? false;
   const [detail, setDetail] = useState<MeetingDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    if (!meetingId || !isTauri()) {
+    if (forceMock || !meetingId || !isTauri()) {
       setDetail(null);
+      setError(null);
+      setLoading(false);
       return;
     }
 
@@ -33,7 +43,7 @@ export function useMeetingDetail(meetingId: number | null): UseMeetingDetailResu
     } finally {
       setLoading(false);
     }
-  }, [meetingId]);
+  }, [forceMock, meetingId]);
 
   useEffect(() => {
     load();
@@ -41,7 +51,7 @@ export function useMeetingDetail(meetingId: number | null): UseMeetingDetailResu
 
   // Listen for transcription/summarization events to auto-refresh
   useEffect(() => {
-    if (!meetingId || !isTauri()) return;
+    if (forceMock || !meetingId || !isTauri()) return;
 
     const events = ["transcription-complete", "summarization-started", "summarization-complete"];
     const unlisteners = events.map((event) =>
@@ -55,7 +65,7 @@ export function useMeetingDetail(meetingId: number | null): UseMeetingDetailResu
     return () => {
       unlisteners.forEach((p) => p.then((fn) => fn()));
     };
-  }, [meetingId, load]);
+  }, [forceMock, meetingId, load]);
 
   return { detail, loading, error, refresh: load };
 }

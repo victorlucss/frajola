@@ -6,37 +6,42 @@ import { mockMeetings } from "../lib/mock-data";
 
 interface UseMeetingsResult {
   meetings: Meeting[];
-  isDemo: boolean;
   loading: boolean;
   refresh: () => Promise<void>;
 }
 
-export function useMeetings(): UseMeetingsResult {
+interface UseMeetingsOptions {
+  forceMock?: boolean;
+}
+
+export function useMeetings(options: UseMeetingsOptions = {}): UseMeetingsResult {
+  const forceMock = options.forceMock ?? false;
   const [meetings, setMeetings] = useState<Meeting[]>([]);
-  const [isDemo, setIsDemo] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
+    if (forceMock) {
+      setMeetings(mockMeetings);
+      setLoading(false);
+      return;
+    }
+
     if (isTauri()) {
       try {
         const result = await invoke<Meeting[]>("list_meetings");
         if (result.length > 0) {
           setMeetings(result);
-          setIsDemo(false);
         } else {
           setMeetings(mockMeetings);
-          setIsDemo(true);
         }
       } catch {
         setMeetings(mockMeetings);
-        setIsDemo(true);
       }
     } else {
       setMeetings(mockMeetings);
-      setIsDemo(true);
     }
     setLoading(false);
-  }, []);
+  }, [forceMock]);
 
   useEffect(() => {
     load();
@@ -44,7 +49,7 @@ export function useMeetings(): UseMeetingsResult {
 
   // Auto-refresh when backend processing or recording lifecycle events happen.
   useEffect(() => {
-    if (!isTauri()) return;
+    if (!isTauri() || forceMock) return;
     const events = [
       "recording-started",
       "recording-stopped",
@@ -59,7 +64,7 @@ export function useMeetings(): UseMeetingsResult {
     return () => {
       unlisteners.forEach((p) => p.then((fn) => fn()));
     };
-  }, [load]);
+  }, [forceMock, load]);
 
-  return { meetings, isDemo, loading, refresh: load };
+  return { meetings, loading, refresh: load };
 }
