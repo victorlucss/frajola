@@ -107,12 +107,13 @@ jobs:
           set -euo pipefail
 
           CERT_PATH="$RUNNER_TEMP/apple-cert.p12"
-          KEYCHAIN_PATH="$RUNNER_TEMP/tauri-cert-test.keychain-db"
+          KEYCHAIN_PATH="$HOME/Library/Keychains/tauri-cert-test.keychain-db"
           KEYCHAIN_PASSWORD="temporary-test-password"
 
           # Decode cert from secret and assert keychain import works on the runner.
           echo "$APPLE_CERTIFICATE" | base64 -D > "$CERT_PATH"
 
+          rm -f "$KEYCHAIN_PATH"
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security import "$CERT_PATH" \
