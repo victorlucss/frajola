@@ -41,7 +41,7 @@ Frajola is a **free, open-source desktop app** built with Tauri v2 that records 
 | UI i18n (en + pt-BR) | ❌ Not completed | Interface is currently English-only |
 | Cloud transcription (OpenAI Whisper API) | ❌ Not completed | Transcription is currently local-only |
 | Hardware-based model recommendation | ❌ Not completed | Planned |
-| Git integration for artifacts | ❌ Not completed | Planned |
+| Git integration for artifacts | ❌ Not completed | Planned (see `docs/GIT_INTEGRATION_PRD.md`) |
 
 ## Target Users
 
@@ -285,6 +285,10 @@ These are explicitly out of scope for v1.0:
 - [x] Phase 5: AI Summarization
 - [ ] Phase 6: Export + Polish (export not started)
 - [ ] Phase 7: i18n + Packaging
+
+## vNext Drafts
+
+- Git integration spec: `docs/GIT_INTEGRATION_PRD.md`
 
 ## Technical Honesty Notes
 
