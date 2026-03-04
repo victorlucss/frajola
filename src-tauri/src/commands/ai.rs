@@ -1,3 +1,6 @@
+use std::process::Command;
+
+use futures_util::StreamExt;
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, State};
 
@@ -9,6 +12,13 @@ use crate::error::AppError;
 #[derive(Debug, Serialize, Clone)]
 pub struct SummarizationEvent {
     pub meeting_id: i64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct OllamaInstallResult {
+    pub installed: bool,
+    pub requires_manual: bool,
+    pub message: String,
 }
 
 /// Core summarization logic, callable from other commands.
@@ -124,4 +134,201 @@ pub async fn summarize_meeting(
 pub async fn check_ollama_status() -> OllamaStatus {
     let client = OllamaClient::new(None);
     client.check_status().await
+}
+
+fn command_exists(cmd: &str) -> bool {
+    Command::new("which")
+        .arg(cmd)
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false)
+}
+
+#[cfg(target_os = "macos")]
+fn install_ollama_with_homebrew() -> OllamaInstallResult {
+    if !command_exists("brew") {
+        let _ = Command::new("open")
+            .arg("https://ollama.com/download/mac")
+            .spawn();
+        return OllamaInstallResult {
+            installed: false,
+            requires_manual: true,
+            message: "Homebrew not found. Opened Ollama macOS download page.".to_string(),
+        };
+    }
+
+    let output = Command::new("brew")
+        .args(["install", "--cask", "ollama"])
+        .output();
+
+    match output {
+        Ok(out) if out.status.success() => {
+            let _ = Command::new("open").args(["-a", "Ollama"]).spawn();
+            OllamaInstallResult {
+                installed: true,
+                requires_manual: false,
+                message: "Ollama installed via Homebrew and launched.".to_string(),
+            }
+        }
+        Ok(out) => OllamaInstallResult {
+            installed: command_exists("ollama"),
+            requires_manual: true,
+            message: format!(
+                "Homebrew install failed: {}",
+                String::from_utf8_lossy(&out.stderr)
+            ),
+        },
+        Err(err) => OllamaInstallResult {
+            installed: false,
+            requires_manual: true,
+            message: format!("Failed to execute Homebrew install: {err}"),
+        },
+    }
+}
+
+/// Install Ollama locally (best effort) and launch it.
+#[tauri::command]
+pub async fn install_ollama() -> Result<OllamaInstallResult, AppError> {
+    tokio::task::spawn_blocking(|| {
+        if command_exists("ollama") {
+            let _ = Command::new("open").args(["-a", "Ollama"]).spawn();
+            return OllamaInstallResult {
+                installed: true,
+                requires_manual: false,
+                message: "Ollama already installed. Attempted to launch it.".to_string(),
+            };
+        }
+
+        #[cfg(target_os = "macos")]
+        {
+            return install_ollama_with_homebrew();
+        }
+
+        #[cfg(not(target_os = "macos"))]
+        {
+            let _ = Command::new("open")
+                .arg("https://ollama.com/download")
+                .spawn();
+            OllamaInstallResult {
+                installed: false,
+                requires_manual: true,
+                message: "Opened Ollama download page.".to_string(),
+            }
+        }
+    })
+    .await
+    .map_err(|e| AppError::General(format!("Install task failed: {e}")))
+}
+
+/// Start Ollama if installed.
+#[tauri::command]
+pub fn start_ollama() -> Result<(), AppError> {
+    #[cfg(target_os = "macos")]
+    {
+        Command::new("open")
+            .args(["-a", "Ollama"])
+            .spawn()
+            .map_err(|e| AppError::General(format!("Failed to start Ollama: {e}")))?;
+        return Ok(());
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        Command::new("ollama")
+            .arg("serve")
+            .spawn()
+            .map_err(|e| AppError::General(format!("Failed to start Ollama: {e}")))?;
+        Ok(())
+    }
+}
+
+/// Pull an Ollama model and emit progress events.
+///
+/// Emits `ollama-pull-progress` with:
+/// `{ model, status, percent, done }`
+#[tauri::command]
+pub async fn pull_ollama_model(app: AppHandle, model: String) -> Result<(), AppError> {
+    let client = reqwest::Client::new();
+    let response = client
+        .post("http://localhost:11434/api/pull")
+        .json(&serde_json::json!({
+            "model": &model,
+            "stream": true
+        }))
+        .send()
+        .await
+        .map_err(|e| AppError::General(format!("Failed to request Ollama pull: {e}")))?;
+
+    if !response.status().is_success() {
+        let status = response.status();
+        let body = response.text().await.unwrap_or_default();
+        return Err(AppError::General(format!(
+            "Ollama pull failed ({status}): {body}"
+        )));
+    }
+
+    let mut stream = response.bytes_stream();
+    let mut buffer = String::new();
+
+    while let Some(chunk) = stream.next().await {
+        let chunk =
+            chunk.map_err(|e| AppError::General(format!("Ollama pull stream error: {e}")))?;
+        buffer.push_str(&String::from_utf8_lossy(&chunk));
+
+        while let Some(newline_idx) = buffer.find('\n') {
+            let line = buffer[..newline_idx].trim().to_string();
+            buffer = buffer[newline_idx + 1..].to_string();
+
+            if line.is_empty() {
+                continue;
+            }
+
+            let payload: serde_json::Value = serde_json::from_str(&line).map_err(|e| {
+                AppError::General(format!("Failed to parse Ollama pull event: {e}"))
+            })?;
+
+            if let Some(err) = payload.get("error").and_then(|v| v.as_str()) {
+                return Err(AppError::General(format!("Ollama pull error: {err}")));
+            }
+
+            let status = payload
+                .get("status")
+                .and_then(|v| v.as_str())
+                .unwrap_or("Pulling model");
+            let total = payload.get("total").and_then(|v| v.as_u64());
+            let completed = payload.get("completed").and_then(|v| v.as_u64());
+            let done = payload
+                .get("done")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false);
+
+            let percent = match (total, completed) {
+                (Some(t), Some(c)) if t > 0 => ((c as f64 / t as f64) * 100.0).round() as u8,
+                _ if done => 100,
+                _ => 0,
+            };
+
+            let _ = app.emit(
+                "ollama-pull-progress",
+                serde_json::json!({
+                    "model": model,
+                    "status": status,
+                    "percent": percent.min(100),
+                    "done": done
+                }),
+            );
+        }
+    }
+
+    let _ = app.emit(
+        "ollama-pull-progress",
+        serde_json::json!({
+            "model": model,
+            "status": "Completed",
+            "percent": 100,
+            "done": true
+        }),
+    );
+
+    Ok(())
 }
