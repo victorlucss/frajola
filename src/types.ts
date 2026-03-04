@@ -64,6 +64,6 @@ export interface Setting {
   value: string;
 }
 
-export type Tab = "summary" | "actions" | "transcript" | "notes";
+export type Tab = "summary" | "actions" | "transcript";
 
 export type View = "home";

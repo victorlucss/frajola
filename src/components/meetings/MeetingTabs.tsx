@@ -13,7 +13,6 @@ const tabs: { id: Tab; label: string; icon: IconName }[] = [
   { id: "summary", label: "Summary", icon: "file-text" },
   { id: "actions", label: "Action Items", icon: "check-circle" },
   { id: "transcript", label: "Transcript", icon: "mic" },
-  { id: "notes", label: "Notes", icon: "message-square" },
 ];
 
 export default function MeetingTabs({ activeTab, onTabChange, detail }: Props) {
@@ -42,7 +41,6 @@ export default function MeetingTabs({ activeTab, onTabChange, detail }: Props) {
         {activeTab === "summary" && <SummaryContent detail={detail} />}
         {activeTab === "actions" && <ActionsContent detail={detail} />}
         {activeTab === "transcript" && <TranscriptContent detail={detail} />}
-        {activeTab === "notes" && <NotesContent detail={detail} />}
       </div>
     </div>
   );
@@ -111,13 +109,17 @@ function SummaryContent({ detail }: { detail: MeetingDetail }) {
 function ActionsContent({ detail }: { detail: MeetingDetail }) {
   if (detail.action_items.length === 0) {
     const isSummarizing = detail.meeting.status === "summarizing";
+    const isTranscribing = detail.meeting.status === "transcribing";
+    const isProcessing = isSummarizing || isTranscribing;
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <Icon name="check-circle" size={24} className="mb-2 text-text-muted" />
         <p className="text-sm text-text-tertiary">
-          {isSummarizing ? "Extracting action items..." : "No action items"}
+          {isProcessing
+            ? "Extracting action items..."
+            : "No action items were found for this meeting"}
         </p>
-        {isSummarizing && (
+        {isProcessing && (
           <span className="mt-2 h-2 w-2 animate-pulse rounded-full bg-accent" />
         )}
       </div>
@@ -179,22 +181,3 @@ function TranscriptContent({ detail }: { detail: MeetingDetail }) {
   );
 }
 
-function NotesContent({ detail }: { detail: MeetingDetail }) {
-  return (
-    <div>
-      {detail.notes ? (
-        <p className="whitespace-pre-wrap text-sm leading-relaxed text-text-secondary">
-          {detail.notes}
-        </p>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <Icon name="message-square" size={24} className="mb-2 text-text-muted" />
-          <p className="text-sm text-text-tertiary">No notes yet</p>
-          <p className="mt-1 text-xs text-text-muted">
-            Notes editing coming soon
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}

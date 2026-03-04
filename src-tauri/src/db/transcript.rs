@@ -38,6 +38,24 @@ impl Database {
         Ok(())
     }
 
+    /// Delete all generated data for a meeting (transcript, summaries, action items).
+    pub fn clear_meeting_generated_data(&self, meeting_id: i64) -> Result<(), AppError> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "DELETE FROM transcript_segments WHERE meeting_id = ?1",
+            rusqlite::params![meeting_id],
+        )?;
+        conn.execute(
+            "DELETE FROM summaries WHERE meeting_id = ?1",
+            rusqlite::params![meeting_id],
+        )?;
+        conn.execute(
+            "DELETE FROM action_items WHERE meeting_id = ?1",
+            rusqlite::params![meeting_id],
+        )?;
+        Ok(())
+    }
+
     /// Retrieve all transcript segments for a meeting, ordered by start time.
     pub fn get_transcript_segments(
         &self,

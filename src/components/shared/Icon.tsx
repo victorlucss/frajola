@@ -17,6 +17,9 @@ export type IconName =
   | "file-text"
   | "message-square"
   | "chevron-right"
+  | "play"
+  | "pause"
+  | "refresh"
   | "cat";
 
 const paths: Record<IconName, string> = {
@@ -38,6 +41,10 @@ const paths: Record<IconName, string> = {
   "message-square":
     "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z",
   "chevron-right": "M9 18l6-6-6-6",
+  play: "M6 3l15 9-15 9V3z",
+  pause: "M6 4h4v16H6V4z M14 4h4v16h-4V4z",
+  refresh:
+    "M21 2v6h-6 M3 12a9 9 0 0 1 15-6.7L21 8 M3 22v-6h6 M21 12a9 9 0 0 1-15 6.7L3 16",
   cat: "M12 5C8 1 2 1 2 5c0 3 2 5 4 7-1 2-2 4-2 6 0 3 3 4 5 4 1 0 2-.5 3-1.5C13 21.5 14 22 15 22c2 0 5-1 5-4 0-2-1-4-2-6 2-2 4-4 4-7 0-4-6-4-10 0z M8 9v.01 M16 9v.01",
 };
 

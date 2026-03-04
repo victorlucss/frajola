@@ -6,8 +6,19 @@ use crate::error::AppError;
 
 const TARGET_SAMPLE_RATE: usize = 16_000;
 
-/// Load a WAV file and resample to 16kHz mono f32 samples for Whisper.
-pub fn load_and_resample(wav_path: &Path) -> Result<Vec<f32>, AppError> {
+/// Per-frame energy measurement for mic and system channels.
+#[derive(Debug, Clone)]
+pub struct EnergyFrame {
+    pub time_ms: i64,
+    pub mic_rms: f32,
+    pub sys_rms: f32,
+}
+
+/// Load a WAV, extract per-channel energy if stereo, downmix to mono, resample to 16kHz.
+///
+/// Returns `(samples_16k, Some(energy_frames))` for stereo WAVs (L=mic, R=system),
+/// or `(samples_16k, None)` for mono WAVs (backward compatible).
+pub fn load_and_resample_with_energy(wav_path: &Path) -> Result<(Vec<f32>, Option<Vec<EnergyFrame>>), AppError> {
     let reader = hound::WavReader::open(wav_path)
         .map_err(|e| AppError::General(format!("Failed to open WAV: {e}")))?;
 
@@ -28,19 +39,27 @@ pub fn load_and_resample(wav_path: &Path) -> Result<Vec<f32>, AppError> {
             .map_err(|e| AppError::General(format!("Failed to read WAV samples: {e}")))?,
     };
 
-    // Downmix to mono if multichannel
-    let mono: Vec<f32> = if channels == 1 {
-        raw_samples
+    // Separate channels and compute energy if stereo
+    let (mono, energy) = if channels == 2 {
+        let (left, right) = deinterleave_stereo(&raw_samples);
+        let energy = compute_energy_frames(&left, &right, source_rate);
+        // Downmix to mono by averaging L+R
+        let mono: Vec<f32> = left.iter().zip(&right).map(|(l, r)| (l + r) * 0.5).collect();
+        (mono, Some(energy))
+    } else if channels == 1 {
+        (raw_samples, None)
     } else {
-        raw_samples
+        // >2 channels: downmix to mono, no energy
+        let mono = raw_samples
             .chunks(channels)
             .map(|frame| frame.iter().sum::<f32>() / channels as f32)
-            .collect()
+            .collect();
+        (mono, None)
     };
 
     // If already at target rate, return directly
     if source_rate == TARGET_SAMPLE_RATE {
-        return Ok(mono);
+        return Ok((mono, energy));
     }
 
     // Resample using rubato SincFixedIn
@@ -65,5 +84,46 @@ pub fn load_and_resample(wav_path: &Path) -> Result<Vec<f32>, AppError> {
         .process(&[&mono], None)
         .map_err(|e| AppError::General(format!("Resampling failed: {e}")))?;
 
-    Ok(resampled.into_iter().next().unwrap_or_default())
+    Ok((resampled.into_iter().next().unwrap_or_default(), energy))
+}
+
+/// Separate interleaved stereo [L0, R0, L1, R1, ...] into two mono vectors.
+fn deinterleave_stereo(interleaved: &[f32]) -> (Vec<f32>, Vec<f32>) {
+    let n = interleaved.len() / 2;
+    let mut left = Vec::with_capacity(n);
+    let mut right = Vec::with_capacity(n);
+    for frame in interleaved.chunks_exact(2) {
+        left.push(frame[0]);
+        right.push(frame[1]);
+    }
+    (left, right)
+}
+
+/// Compute per-100ms RMS energy for mic (left) and system (right) channels.
+fn compute_energy_frames(left: &[f32], right: &[f32], sample_rate: usize) -> Vec<EnergyFrame> {
+    let frame_samples = sample_rate / 10; // 100ms frames
+    let n_frames = left.len() / frame_samples;
+    let mut frames = Vec::with_capacity(n_frames);
+
+    for i in 0..n_frames {
+        let start = i * frame_samples;
+        let end = start + frame_samples;
+        let mic_rms = rms(&left[start..end]);
+        let sys_rms = rms(&right[start..end]);
+        frames.push(EnergyFrame {
+            time_ms: (i * 100) as i64,
+            mic_rms,
+            sys_rms,
+        });
+    }
+
+    frames
+}
+
+fn rms(samples: &[f32]) -> f32 {
+    if samples.is_empty() {
+        return 0.0;
+    }
+    let sum_sq: f32 = samples.iter().map(|s| s * s).sum();
+    (sum_sq / samples.len() as f32).sqrt()
 }

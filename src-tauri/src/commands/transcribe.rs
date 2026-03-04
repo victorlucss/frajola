@@ -1,28 +1,25 @@
 use std::path::PathBuf;
 
-use serde::Serialize;
 use tauri::{AppHandle, Emitter, State};
 
 use crate::db::Database;
 use crate::error::AppError;
 use crate::transcribe::{model, resample, whisper};
 
-#[derive(Debug, Serialize)]
-pub struct ModelStatus {
-    pub downloaded: bool,
+#[tauri::command]
+pub fn get_whisper_models(app: AppHandle) -> Vec<model::WhisperModelStatus> {
+    model::get_all_models_status(&app)
 }
 
 #[tauri::command]
-pub fn get_model_status(app: AppHandle) -> ModelStatus {
-    ModelStatus {
-        downloaded: model::is_model_downloaded(&app),
-    }
-}
-
-#[tauri::command]
-pub async fn download_model(app: AppHandle) -> Result<(), AppError> {
-    model::download_model(&app).await?;
+pub async fn download_model(app: AppHandle, model_key: String) -> Result<(), AppError> {
+    model::download_model(&app, &model_key).await?;
     Ok(())
+}
+
+#[tauri::command]
+pub fn delete_whisper_model(app: AppHandle, model_key: String) -> Result<(), AppError> {
+    model::delete_model(&app, &model_key)
 }
 
 #[tauri::command]
@@ -48,11 +45,17 @@ pub async fn transcribe_meeting(
         )));
     }
 
-    // 2. Set status to 'transcribing'
+    // 2. Clear old generated data (transcript, summaries, action items) and set status
+    db.clear_meeting_generated_data(meeting_id)?;
     db.update_meeting_status(meeting_id, "transcribing")?;
 
-    // 3. Download model if needed
-    let model_path = match model::download_model(&app).await {
+    // 3. Determine which model to use from settings (default: "base")
+    let model_key = db
+        .get_setting("whisper_model")?
+        .unwrap_or_else(|| "base".to_string());
+
+    // 4. Download model if needed
+    let model_path = match model::download_model(&app, &model_key).await {
         Ok(p) => p,
         Err(e) => {
             db.update_meeting_status(meeting_id, "failed")?;
@@ -60,31 +63,30 @@ pub async fn transcribe_meeting(
         }
     };
 
-    // 4. Load and resample audio (CPU-intensive, run in blocking thread)
-    let samples = {
+    // 5. Load and resample audio with energy extraction (CPU-intensive, run in blocking thread)
+    let resample_result = {
         let path = audio_path.clone();
-        tokio::task::spawn_blocking(move || resample::load_and_resample(&path))
+        tokio::task::spawn_blocking(move || resample::load_and_resample_with_energy(&path))
             .await
             .map_err(|e| {
                 AppError::General(format!("Resample task panicked: {e}"))
             })?
     };
 
-    let samples = match samples {
-        Ok(s) => s,
+    let (samples, energy) = match resample_result {
+        Ok(r) => r,
         Err(e) => {
             db.update_meeting_status(meeting_id, "failed")?;
             return Err(e);
         }
     };
 
-    // 5. Run Whisper inference (CPU-intensive, run in blocking thread)
-    let language = meeting.language.clone();
+    // 6. Run Whisper inference (CPU-intensive, run in blocking thread)
+    // Let Whisper auto-detect the language from the audio
     let whisper_result = {
         let mp = model_path.clone();
-        let lang = language.clone();
         tokio::task::spawn_blocking(move || {
-            whisper::transcribe(&mp, &samples, lang.as_deref())
+            whisper::transcribe(&mp, &samples, None, energy.as_deref())
         })
         .await
         .map_err(|e| AppError::General(format!("Whisper task panicked: {e}")))?
@@ -98,7 +100,7 @@ pub async fn transcribe_meeting(
         }
     };
 
-    // 6. Insert transcript segments into DB
+    // 7. Insert transcript segments into DB
     let db_segments: Vec<(Option<&str>, i64, i64, &str)> = segments
         .iter()
         .map(|s| (s.speaker.as_deref(), s.start_ms, s.end_ms, s.text.as_str()))
@@ -109,17 +111,25 @@ pub async fn transcribe_meeting(
         return Err(e);
     }
 
-    // 7. Emit transcription-complete, then chain summarization
+    // 8. Emit transcription-complete, then chain summarization
     let _ = app.emit(
         "transcription-complete",
         serde_json::json!({ "meeting_id": meeting_id }),
     );
 
-    // 8. Run AI summarization (sets status to 'summarizing' then 'complete')
-    //    On failure, run_summarization logs the error and still sets 'complete'
-    if let Err(e) = super::ai::run_summarization(&app, &db, meeting_id).await {
-        log::warn!("Summarization failed for meeting {meeting_id}: {e}");
-        let _ = db.update_meeting_status(meeting_id, "complete");
+    // 9. Optional AI summarization (controlled by settings).
+    let ai_enabled = db
+        .get_setting("ai_enabled")?
+        .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+        .unwrap_or(true);
+
+    if ai_enabled {
+        if let Err(e) = super::ai::run_summarization(&app, &db, meeting_id).await {
+            log::warn!("Summarization failed for meeting {meeting_id}: {e}");
+            let _ = db.update_meeting_status(meeting_id, "complete");
+        }
+    } else {
+        db.update_meeting_status(meeting_id, "complete")?;
     }
 
     Ok(())

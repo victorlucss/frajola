@@ -52,10 +52,6 @@ pub fn start_capture(
         .map_err(|e| format!("Failed to get mic config: {e}"))?;
 
     let sample_rate = mic_config.sample_rate();
-    let channels = 1u16; // output mono WAV
-
-    // Create WAV encoder
-    let encoder = WavEncoder::new(audio_path, sample_rate, channels)?;
 
     // Channel for tagged audio chunks from both streams
     let (tx, rx) = mpsc::channel::<AudioChunk>();
@@ -81,8 +77,10 @@ pub fn start_capture(
         .map_err(|e| format!("Failed to start mic stream: {e}"))?;
 
     // --- System audio (loopback) stream ---
+    let mic_rate = sample_rate;
     let has_system_audio;
     let mut system_audio_error = None;
+    let mut sys_resample_ratio: Option<f64> = None;
     let system_stream = if capture_system_audio {
         let sys_tx = tx.clone();
         match build_system_audio_stream(
@@ -93,7 +91,16 @@ pub fn start_capture(
             &stop_flag,
             &paused_flag,
         ) {
-            Ok(stream) => {
+            Ok((stream, sys_rate)) => {
+                if sys_rate != mic_rate {
+                    let ratio = mic_rate as f64 / sys_rate as f64;
+                    log::info!(
+                        "Sample rate mismatch: mic={mic_rate}Hz, system={sys_rate}Hz, resampling system audio (ratio={ratio:.4})"
+                    );
+                    sys_resample_ratio = Some(ratio);
+                } else {
+                    log::info!("Mic and system audio both at {mic_rate}Hz, no resampling needed");
+                }
                 stream
                     .play()
                     .map_err(|e| format!("Failed to start system audio stream: {e}"))?;
@@ -115,11 +122,22 @@ pub fn start_capture(
     // Drop the original sender — mic and system streams hold clones
     drop(tx);
 
+    // Create WAV encoder now that we know the channel count
+    let channels = if has_system_audio { 2u16 } else { 1u16 };
+    let encoder = WavEncoder::new(audio_path, sample_rate, channels)?;
+
     // --- Writer thread ---
     let writer_stop = stop_flag.clone();
     let writer_paused = paused_flag.clone();
     let writer_thread = thread::spawn(move || {
-        writer_loop(rx, encoder, writer_stop, writer_paused, has_system_audio)
+        writer_loop(
+            rx,
+            encoder,
+            writer_stop,
+            writer_paused,
+            has_system_audio,
+            sys_resample_ratio,
+        )
     });
 
     Ok(CaptureHandles {
@@ -177,7 +195,7 @@ fn build_system_audio_stream(
     on_data: impl Fn(Vec<f32>) + Send + 'static,
     stop_flag: &Arc<AtomicBool>,
     paused_flag: &Arc<AtomicBool>,
-) -> Result<Stream, String> {
+) -> Result<(Stream, u32), String> {
     // On macOS 14.2+: cpal's build_input_stream on an output device creates a
     // CoreAudioTap loopback automatically (requires Screen & System Audio Recording permission).
     // We use default_output_config() since default_input_config() fails on output-only devices.
@@ -189,11 +207,39 @@ fn build_system_audio_stream(
         .default_output_config()
         .map_err(|e| format!("Failed to get output device config: {e}"))?;
 
+    let sys_rate = config.sample_rate();
     let device_channels = config.channels() as usize;
     let stop = stop_flag.clone();
     let paused = paused_flag.clone();
 
-    build_input_stream(&output_device, &config, device_channels, on_data, stop, paused)
+    let stream =
+        build_input_stream(&output_device, &config, device_channels, on_data, stop, paused)?;
+    Ok((stream, sys_rate))
+}
+
+/// Resample audio using linear interpolation.
+/// `ratio` = target_rate / source_rate (e.g., 16000/48000 = 0.333 for downsampling).
+fn resample_linear(input: &[f32], ratio: f64) -> Vec<f32> {
+    if input.is_empty() {
+        return Vec::new();
+    }
+    let out_len = (input.len() as f64 * ratio).round() as usize;
+    if out_len == 0 {
+        return Vec::new();
+    }
+    let mut output = Vec::with_capacity(out_len);
+    for i in 0..out_len {
+        let src_pos = i as f64 / ratio;
+        let idx = src_pos as usize;
+        let frac = (src_pos - idx as f64) as f32;
+        let sample = if idx + 1 < input.len() {
+            input[idx] * (1.0 - frac) + input[idx + 1] * frac
+        } else {
+            input[idx.min(input.len() - 1)]
+        };
+        output.push(sample);
+    }
+    output
 }
 
 /// Writer thread that mixes mic and system audio before writing to WAV.
@@ -207,6 +253,7 @@ fn writer_loop(
     stop_flag: Arc<AtomicBool>,
     paused_flag: Arc<AtomicBool>,
     has_system_audio: bool,
+    sys_resample_ratio: Option<f64>,
 ) -> Result<(), String> {
     let mut mic_buf: Vec<f32> = Vec::new();
     let mut sys_buf: Vec<f32> = Vec::new();
@@ -220,7 +267,13 @@ fn writer_loop(
 
                 match chunk {
                     AudioChunk::Mic(samples) => mic_buf.extend_from_slice(&samples),
-                    AudioChunk::System(samples) => sys_buf.extend_from_slice(&samples),
+                    AudioChunk::System(samples) => {
+                        let resampled = match sys_resample_ratio {
+                            Some(ratio) => resample_linear(&samples, ratio),
+                            None => samples,
+                        };
+                        sys_buf.extend_from_slice(&resampled);
+                    }
                 }
 
                 flush_mixed(
@@ -240,7 +293,11 @@ fn writer_loop(
                                     mic_buf.extend_from_slice(&samples)
                                 }
                                 AudioChunk::System(samples) => {
-                                    sys_buf.extend_from_slice(&samples)
+                                    let resampled = match sys_resample_ratio {
+                                        Some(ratio) => resample_linear(&samples, ratio),
+                                        None => samples,
+                                    };
+                                    sys_buf.extend_from_slice(&resampled);
                                 }
                             }
                         }
@@ -262,8 +319,19 @@ fn writer_loop(
     Ok(())
 }
 
-/// Mix and write the overlapping portion of both buffers.
-/// If no system audio, just flush mic directly.
+/// Interleave two mono channels into stereo: [L0, R0, L1, R1, ...]
+fn interleave_stereo(left: &[f32], right: &[f32]) -> Vec<f32> {
+    let len = left.len().min(right.len());
+    let mut out = Vec::with_capacity(len * 2);
+    for i in 0..len {
+        out.push(left[i]);
+        out.push(right[i]);
+    }
+    out
+}
+
+/// Write the overlapping portion of both buffers as stereo interleaved samples.
+/// If no system audio, just flush mic directly (mono).
 fn flush_mixed(
     mic_buf: &mut Vec<f32>,
     sys_buf: &mut Vec<f32>,
@@ -271,7 +339,6 @@ fn flush_mixed(
     has_system_audio: bool,
 ) -> Result<(), String> {
     if !has_system_audio {
-        // No system audio — write mic samples directly
         if !mic_buf.is_empty() {
             encoder.write_f32_samples(mic_buf)?;
             mic_buf.clear();
@@ -279,53 +346,44 @@ fn flush_mixed(
         return Ok(());
     }
 
-    // Mix the overlapping portion (sum mic + system)
-    let mix_len = mic_buf.len().min(sys_buf.len());
-    if mix_len > 0 {
-        let mixed: Vec<f32> = mic_buf[..mix_len]
-            .iter()
-            .zip(&sys_buf[..mix_len])
-            .map(|(m, s)| (m + s).clamp(-1.0, 1.0))
-            .collect();
-        encoder.write_f32_samples(&mixed)?;
-        mic_buf.drain(..mix_len);
-        sys_buf.drain(..mix_len);
+    // Interleave the overlapping portion as stereo (L=mic, R=system)
+    let overlap = mic_buf.len().min(sys_buf.len());
+    if overlap > 0 {
+        let stereo = interleave_stereo(&mic_buf[..overlap], &sys_buf[..overlap]);
+        encoder.write_f32_samples(&stereo)?;
+        mic_buf.drain(..overlap);
+        sys_buf.drain(..overlap);
     }
 
     Ok(())
 }
 
 /// Flush any remaining samples at end of recording.
-/// Mix whatever overlaps, then write any leftover from either source.
+/// Pad the shorter channel with silence to match lengths, then interleave as stereo.
+/// If only mic data exists (no system audio was active), write mono directly.
 fn flush_remaining(
     mic_buf: &mut Vec<f32>,
     sys_buf: &mut Vec<f32>,
     encoder: &mut WavEncoder,
 ) -> Result<(), String> {
-    // Mix the overlapping portion
-    let mix_len = mic_buf.len().min(sys_buf.len());
-    if mix_len > 0 {
-        let mixed: Vec<f32> = mic_buf[..mix_len]
-            .iter()
-            .zip(&sys_buf[..mix_len])
-            .map(|(m, s)| (m + s).clamp(-1.0, 1.0))
-            .collect();
-        encoder.write_f32_samples(&mixed)?;
-        mic_buf.drain(..mix_len);
-        sys_buf.drain(..mix_len);
-    }
-
-    // Write any remaining mic samples
-    if !mic_buf.is_empty() {
+    if sys_buf.is_empty() && !mic_buf.is_empty() {
+        // Mono-only path (no system audio) — write mic directly
         encoder.write_f32_samples(mic_buf)?;
         mic_buf.clear();
+        return Ok(());
     }
 
-    // Write any remaining system audio samples
-    if !sys_buf.is_empty() {
-        encoder.write_f32_samples(sys_buf)?;
-        sys_buf.clear();
+    // Pad the shorter buffer with silence so both have equal length
+    let max_len = mic_buf.len().max(sys_buf.len());
+    mic_buf.resize(max_len, 0.0);
+    sys_buf.resize(max_len, 0.0);
+
+    if max_len > 0 {
+        let stereo = interleave_stereo(mic_buf, sys_buf);
+        encoder.write_f32_samples(&stereo)?;
     }
 
+    mic_buf.clear();
+    sys_buf.clear();
     Ok(())
 }

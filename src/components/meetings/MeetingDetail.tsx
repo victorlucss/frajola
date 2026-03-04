@@ -1,13 +1,15 @@
 import { useState } from "react";
 import type { MeetingDetail as MeetingDetailType, Tab } from "../../types";
 import { formatDate, formatTime, formatDuration } from "../../lib/date";
+import { isTauri, invoke } from "../../lib/tauri";
 import Icon from "../shared/Icon";
 import type { IconName } from "../shared/Icon";
 import MeetingTabs from "./MeetingTabs";
-import AskBar from "../shared/AskBar";
+import AudioPlayer from "./AudioPlayer";
 
 interface Props {
   detail: MeetingDetailType;
+  onRefresh?: () => Promise<void>;
 }
 
 const metaItems: {
@@ -27,25 +29,69 @@ const metaItems: {
     getValue: (d) => formatDuration(d.meeting.duration_seconds),
   },
   {
-    label: "Language",
-    icon: "globe",
-    getValue: (d) => d.meeting.language ?? "en",
-  },
-  {
     label: "Status",
     icon: "check-circle",
     getValue: (d) => d.meeting.status.charAt(0).toUpperCase() + d.meeting.status.slice(1),
   },
 ];
 
-export default function MeetingDetail({ detail }: Props) {
+export default function MeetingDetail({ detail, onRefresh }: Props) {
   const isTranscribing = detail.meeting.status === "transcribing";
   const isSummarizing = detail.meeting.status === "summarizing";
+  const isProcessing = isTranscribing || isSummarizing;
   const defaultTab: Tab = detail.meeting.is_demo ? "summary" : "transcript";
   const [activeTab, setActiveTab] = useState<Tab>(defaultTab);
+  const [showRetranscribeModal, setShowRetranscribeModal] = useState(false);
+
+  const canRetranscribe =
+    isTauri() &&
+    !detail.meeting.is_demo &&
+    !isProcessing &&
+    detail.meeting.audio_path &&
+    detail.meeting.status !== "recording";
+
+  const handleRetranscribe = async () => {
+    setShowRetranscribeModal(false);
+    // Fire transcription (don't await — it runs in background)
+    invoke("transcribe_meeting", { meetingId: detail.meeting.id }).catch(
+      (err) => console.error("Re-transcription failed:", err)
+    );
+    // Small delay to let the backend clear data + set status, then refresh
+    await new Promise((r) => setTimeout(r, 200));
+    onRefresh?.();
+  };
 
   return (
     <div className="flex h-full flex-col">
+      {/* Re-transcribe confirmation modal */}
+      {showRetranscribeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-xl border border-border bg-bg-elevated p-6 shadow-2xl">
+            <h3 className="text-base font-semibold text-text-primary">
+              Re-transcribe meeting?
+            </h3>
+            <p className="mt-2 text-sm text-text-secondary">
+              This will delete the current transcript, summary, and action items,
+              then re-process the audio from scratch.
+            </p>
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                onClick={() => setShowRetranscribeModal(false)}
+                className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-bg-card"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRetranscribe}
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-bg transition-colors hover:bg-accent-dim"
+              >
+                Re-transcribe
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Processing indicator */}
       {isTranscribing && (
         <div className="flex items-center gap-2 border-b border-accent/20 bg-accent/5 px-6 py-3">
@@ -75,6 +121,16 @@ export default function MeetingDetail({ detail }: Props) {
               Demo
             </span>
           )}
+          {canRetranscribe && (
+            <button
+              onClick={() => setShowRetranscribeModal(true)}
+              title="Re-transcribe"
+              className="ml-auto flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-bg-card hover:text-text-primary"
+            >
+              <Icon name="refresh" size={13} />
+              Re-transcribe
+            </button>
+          )}
         </div>
         {detail.meeting.subtitle && (
           <p className="mt-0.5 text-sm text-text-tertiary">
@@ -94,6 +150,13 @@ export default function MeetingDetail({ detail }: Props) {
             </div>
           ))}
         </div>
+
+        {/* Audio player */}
+        {detail.meeting.audio_path &&
+          !detail.meeting.is_demo &&
+          detail.meeting.status !== "recording" && (
+            <AudioPlayer audioPath={detail.meeting.audio_path} durationSeconds={detail.meeting.duration_seconds} />
+          )}
       </div>
 
       {/* Tabs + content */}
@@ -103,10 +166,6 @@ export default function MeetingDetail({ detail }: Props) {
         detail={detail}
       />
 
-      {/* Ask bar */}
-      <div className="shrink-0 border-t border-border p-4">
-        <AskBar />
-      </div>
     </div>
   );
 }
