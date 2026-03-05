@@ -189,8 +189,6 @@ function InputField({
 }
 
 function GeneralSettings({ getSetting, updateSetting }: SettingsSectionProps) {
-  const mockModeEnabled = (getSetting("mock_mode") ?? "0") === "1";
-
   return (
     <div className="space-y-4">
       <SelectField
@@ -206,37 +204,6 @@ function GeneralSettings({ getSetting, updateSetting }: SettingsSectionProps) {
           window.dispatchEvent(new CustomEvent("theme-changed", { detail: v }));
         }}
       />
-
-      <div className="rounded-lg border border-border bg-bg-card p-3">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-medium text-text-primary">Mock Data Mode</p>
-            <p className="mt-1 text-xs text-text-secondary">
-              Force demo meetings for screenshot sessions.
-            </p>
-          </div>
-          <button
-            onClick={() => {
-              const nextEnabled = !mockModeEnabled;
-              void updateSetting("mock_mode", nextEnabled ? "1" : "0");
-              window.dispatchEvent(
-                new CustomEvent("mock-mode-changed", { detail: nextEnabled }),
-              );
-            }}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-              mockModeEnabled
-                ? "bg-accent text-white hover:bg-accent/90"
-                : "border border-border text-text-secondary hover:bg-bg-card-hover"
-            }`}
-          >
-            {mockModeEnabled ? "Disable" : "Enable"}
-          </button>
-        </div>
-
-        <p className="mt-2 text-[11px] text-text-tertiary">
-          Tip: you can also launch with <span className="font-mono text-text-secondary">?mock=1</span>.
-        </p>
-      </div>
     </div>
   );
 }

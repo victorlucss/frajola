@@ -42,23 +42,6 @@ export interface MeetingDetail {
   notes?: string;
 }
 
-/** Mock action item used in demo data */
-export interface MockActionItem {
-  id: string;
-  text: string;
-  assignee?: string;
-  done: boolean;
-}
-
-/** Mock detail uses legacy format for demo data */
-export interface MockMeetingDetail {
-  meeting: Meeting;
-  summary: Summary;
-  transcript: { id: string; timestamp: string; speaker: string; text: string }[];
-  action_items: MockActionItem[];
-  notes: string;
-}
-
 export interface Setting {
   key: string;
   value: string;

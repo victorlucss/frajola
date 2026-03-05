@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback } from "react";
 import { listen } from "@tauri-apps/api/event";
 import type { Meeting } from "../types";
 import { isTauri, invoke } from "../lib/tauri";
-import { mockMeetings } from "../lib/mock-data";
 
 interface UseMeetingsResult {
   meetings: Meeting[];
@@ -10,38 +9,23 @@ interface UseMeetingsResult {
   refresh: () => Promise<void>;
 }
 
-interface UseMeetingsOptions {
-  forceMock?: boolean;
-}
-
-export function useMeetings(options: UseMeetingsOptions = {}): UseMeetingsResult {
-  const forceMock = options.forceMock ?? false;
+export function useMeetings(): UseMeetingsResult {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    if (forceMock) {
-      setMeetings(mockMeetings);
-      setLoading(false);
-      return;
-    }
-
     if (isTauri()) {
       try {
         const result = await invoke<Meeting[]>("list_meetings");
-        if (result.length > 0) {
-          setMeetings(result);
-        } else {
-          setMeetings(mockMeetings);
-        }
+        setMeetings(result);
       } catch {
-        setMeetings(mockMeetings);
+        setMeetings([]);
       }
     } else {
-      setMeetings(mockMeetings);
+      setMeetings([]);
     }
     setLoading(false);
-  }, [forceMock]);
+  }, []);
 
   useEffect(() => {
     load();
@@ -49,7 +33,7 @@ export function useMeetings(options: UseMeetingsOptions = {}): UseMeetingsResult
 
   // Auto-refresh when backend processing or recording lifecycle events happen.
   useEffect(() => {
-    if (!isTauri() || forceMock) return;
+    if (!isTauri()) return;
     const events = [
       "recording-started",
       "recording-stopped",
@@ -64,7 +48,7 @@ export function useMeetings(options: UseMeetingsOptions = {}): UseMeetingsResult
     return () => {
       unlisteners.forEach((p) => p.then((fn) => fn()));
     };
-  }, [forceMock, load]);
+  }, [load]);
 
   return { meetings, loading, refresh: load };
 }
