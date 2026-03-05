@@ -13,8 +13,6 @@ use std::sync::Mutex;
 use audio::state::RecordingState;
 use db::Database;
 use tauri::{Manager, RunEvent};
-#[cfg(not(target_os = "macos"))]
-use tauri::WebviewWindow;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -54,7 +52,7 @@ pub fn run() {
             {
                 if let Some(win) = app.get_webview_window("main") {
                     let _ = win.set_decorations(true);
-                    let _ = win.clear_effects();
+                    let _ = win.set_effects(None);
                 }
             }
 
