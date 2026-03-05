@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 *,
 *::before,
@@ -13,13 +13,53 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* Slim custom scrollbars */
+.sc-sidebar-scroll,
+.sc-main {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.sc-sidebar-scroll::-webkit-scrollbar,
+.sc-main::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sc-sidebar-scroll::-webkit-scrollbar-track,
+.sc-main::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sc-sidebar-scroll::-webkit-scrollbar-thumb,
+.sc-main::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.sc-sidebar-scroll::-webkit-scrollbar-thumb:hover,
+.sc-main::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
 body {
-  font-family: var(--font);
+  font-family: var(--font-body);
   background: var(--bg);
   color: var(--text);
   line-height: var(--leading-normal);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Film grain overlay */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: var(--z-grain);
+  opacity: 0.028;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
 }
 
 img {
@@ -31,6 +71,12 @@ img {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
 }
 
 /* Container */
@@ -46,18 +92,20 @@ a {
 }
 
 .section-label {
-  font-size: var(--text-sm);
-  font-weight: var(--weight-semibold);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
   color: var(--accent);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
-  margin-bottom: var(--sp-3);
+  letter-spacing: var(--tracking-wider);
+  margin-bottom: var(--sp-4);
 }
 
 .section-headline {
-  font-size: var(--text-3xl);
-  font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-tight);
+  font-family: var(--font-display);
+  font-size: var(--text-4xl);
+  font-weight: var(--weight-extrabold);
+  letter-spacing: -0.03em;
   line-height: var(--leading-tight);
   margin-bottom: var(--sp-4);
 }
@@ -66,6 +114,7 @@ a {
   font-size: var(--text-lg);
   color: var(--text-secondary);
   margin-bottom: var(--sp-12);
+  max-width: 540px;
 }
 
 /* Buttons */
@@ -74,27 +123,27 @@ a {
   align-items: center;
   justify-content: center;
   gap: var(--sp-2);
-  font-family: var(--font);
+  font-family: var(--font-body);
   font-weight: var(--weight-medium);
   text-decoration: none;
   border: none;
   cursor: pointer;
   transition: all var(--ease-base);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-full);
 }
 
 .btn-sm {
-  padding: 8px 16px;
+  padding: 8px 18px;
   font-size: var(--text-sm);
 }
 
 .btn-md {
-  padding: 10px 22px;
+  padding: 10px 24px;
   font-size: var(--text-base);
 }
 
 .btn-lg {
-  padding: 14px 28px;
+  padding: 14px 32px;
   font-size: var(--text-base);
 }
 
@@ -106,16 +155,18 @@ a {
 .btn-primary:hover {
   background: var(--accent-dim);
   color: #fff;
+  box-shadow: 0 0 24px var(--accent-glow-strong);
 }
 
 .btn-ghost {
   background: transparent;
-  color: var(--text);
+  color: var(--text-secondary);
   border: 1px solid var(--border);
 }
 
 .btn-ghost:hover {
   border-color: var(--text-tertiary);
+  color: var(--text);
   background: var(--bg-elevated);
 }
 
@@ -124,9 +175,9 @@ a {
   position: sticky;
   top: 0;
   z-index: var(--z-nav);
-  background: rgba(10, 10, 10, 0.8);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(11, 11, 9, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid transparent;
   transition: border-color var(--ease-base);
 }
@@ -146,7 +197,8 @@ a {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
-  font-weight: var(--weight-semibold);
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
   font-size: var(--text-base);
   color: var(--text);
   flex-shrink: 0;
@@ -167,15 +219,11 @@ a {
 
 .nav-links a {
   font-size: var(--text-sm);
-  color: var(--text-secondary);
+  color: var(--text-tertiary);
   transition: color var(--ease-fast);
 }
 
 .nav-links a:hover {
-  color: var(--text);
-}
-
-.nav-links a.active {
   color: var(--text);
 }
 
@@ -216,7 +264,7 @@ a {
 
 /* Footer */
 .footer {
-  padding: var(--sp-10) 0;
+  padding: var(--sp-12) 0;
   border-top: 1px solid var(--border);
 }
 
@@ -232,6 +280,7 @@ a {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
+  font-family: var(--font-display);
   font-weight: var(--weight-semibold);
   font-size: var(--text-sm);
 }
@@ -249,7 +298,7 @@ a {
 
 .footer-links a {
   font-size: var(--text-sm);
-  color: var(--text-secondary);
+  color: var(--text-tertiary);
   transition: color var(--ease-fast);
 }
 
@@ -259,7 +308,7 @@ a {
 
 .footer-copy {
   font-size: var(--text-xs);
-  color: var(--text-tertiary);
+  color: var(--text-muted);
 }
 
 /* Responsive */
@@ -287,9 +336,9 @@ a {
     left: 0;
     right: 0;
     flex-direction: column;
-    background: rgba(10, 10, 10, 0.95);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    background: rgba(11, 11, 9, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     padding: var(--sp-6);
     gap: var(--sp-4);
     border-bottom: 1px solid var(--border);
@@ -312,7 +361,6 @@ a {
     display: flex;
   }
 
-  /* Footer */
   .footer-inner {
     flex-direction: column;
     align-items: center;
