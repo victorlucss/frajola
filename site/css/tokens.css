@@ -1,26 +1,27 @@
 :root {
-  /* Background */
-  --bg: #0a0a0a;
-  --bg-elevated: #141414;
-  --bg-card: #1a1a1a;
-  --bg-card-hover: #222222;
-  --surface: #0f0f0f;
+  /* Background — warm charcoal */
+  --bg: #0b0b09;
+  --bg-elevated: #131311;
+  --bg-card: #191916;
+  --bg-card-hover: #1f1f1c;
+  --surface: #0f0f0d;
 
-  /* Text */
-  --text: #f0f0f0;
-  --text-secondary: #a0a0a0;
-  --text-tertiary: #666666;
-  --text-muted: #444444;
+  /* Text — warm whites */
+  --text: #ece9e1;
+  --text-secondary: #9a9789;
+  --text-tertiary: #5c5a51;
+  --text-muted: #3d3b35;
 
-  /* Accent — olive green from logo */
+  /* Accent — olive/sage from logo */
   --accent: #9ab04d;
-  --accent-dim: #7a8c34;
-  --accent-glow: rgba(154, 176, 77, 0.12);
-  --accent-text: #0a0a0a;
+  --accent-dim: #7d8f3d;
+  --accent-glow: rgba(154, 176, 77, 0.08);
+  --accent-glow-strong: rgba(154, 176, 77, 0.18);
+  --accent-text: #0b0b09;
 
   /* Borders */
-  --border: #1f1f1f;
-  --border-subtle: #181818;
+  --border: #242420;
+  --border-subtle: #1c1c19;
 
   /* Semantic */
   --success: #4ade80;
@@ -28,7 +29,9 @@
   --danger: #f87171;
 
   /* Typography */
-  --font: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body: 'Outfit', system-ui, sans-serif;
+  --font: var(--font-body);
   --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
 
   --text-xs: 0.75rem;
@@ -38,21 +41,26 @@
   --text-xl: 1.25rem;
   --text-2xl: 1.5rem;
   --text-3xl: 2rem;
-  --text-4xl: 2.5rem;
-  --text-5xl: 3.5rem;
+  --text-4xl: 2.75rem;
+  --text-5xl: 3.75rem;
+  --text-6xl: 4.5rem;
 
+  --weight-light: 300;
   --weight-normal: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
   --weight-bold: 700;
+  --weight-extrabold: 800;
 
-  --leading-tight: 1.2;
+  --leading-tight: 1.1;
+  --leading-snug: 1.25;
   --leading-normal: 1.6;
   --leading-relaxed: 1.8;
 
-  --tracking-tight: -0.02em;
+  --tracking-tight: -0.025em;
   --tracking-normal: 0;
-  --tracking-wide: 0.05em;
+  --tracking-wide: 0.06em;
+  --tracking-wider: 0.1em;
 
   /* Spacing */
   --sp-1: 0.25rem;
@@ -86,16 +94,19 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 24px 80px rgba(0, 0, 0, 0.6);
   --shadow-glow: 0 0 40px var(--accent-glow);
 
   /* Transitions */
   --ease-fast: 150ms ease;
   --ease-base: 300ms ease;
   --ease-slow: 500ms ease;
+  --ease-spring: 600ms cubic-bezier(0.16, 1, 0.3, 1);
 
   /* Z-index */
   --z-base: 1;
   --z-nav: 100;
   --z-overlay: 200;
   --z-modal: 300;
+  --z-grain: 9999;
 }
