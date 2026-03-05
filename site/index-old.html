@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frajola — Privacy-first meeting recorder</title>
+  <meta name="description" content="Record meetings locally with Whisper transcription and AI summaries. No bots, no cloud, no account required.">
+  <link rel="icon" type="image/png" href="assets/icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/landing.css">
+</head>
+<body>
+
+  <nav class="nav" id="nav">
+    <div class="nav-inner container">
+      <a href="/" class="nav-logo">
+        <img src="assets/icon.png" alt="" width="28" height="28">
+        <span>Frajola</span>
+      </a>
+      <div class="nav-links" id="nav-links">
+        <a href="#features">Features</a>
+        <a href="#privacy">Processing</a>
+        <a href="next-features.html">Roadmap</a>
+        <a href="docs/">Docs</a>
+      </div>
+      <a href="#download" class="nav-cta btn btn-primary btn-sm">Download</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">
+        <span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ════════ HERO ════════ -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-waveform fade-up" aria-hidden="true">
+        <span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span>
+        <span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span>
+      </div>
+      <h1 class="hero-title fade-up" data-delay="1">
+        Record meetings locally.<br>No bots. No cloud.
+      </h1>
+      <p class="hero-subtitle fade-up" data-delay="2">
+        Whisper transcription and AI summaries run entirely on your machine.
+        Minimize the app and keep recording from a floating overlay.
+      </p>
+      <div class="hero-actions fade-up" data-delay="3">
+        <a href="#download" class="btn btn-primary btn-lg">Download for free</a>
+        <a href="docs/" class="btn btn-ghost btn-lg">Read the docs</a>
+      </div>
+      <p class="hero-platforms fade-up" data-delay="4">macOS, Windows, and Linux.</p>
+
+      <!-- ── Interactive App Showcase ── -->
+      <div class="hero-showcase fade-up" data-delay="5">
+        <div class="sc-glow" aria-hidden="true"></div>
+
+        <div class="sc-app">
+          <!-- macOS title bar -->
+          <div class="sc-titlebar">
+            <div class="sc-dots">
+              <span class="sc-dot sc-dot--close"></span>
+              <span class="sc-dot sc-dot--min"></span>
+              <span class="sc-dot sc-dot--max"></span>
+            </div>
+          </div>
+
+          <div class="sc-body">
+            <!-- Icon Rail -->
+            <div class="sc-rail">
+              <div class="sc-rail-top">
+                <img src="assets/icon.png" class="sc-rail-logo" alt="" width="32" height="32">
+                <button class="sc-rail-btn sc-rail-btn--active" aria-label="Home">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                </button>
+              </div>
+              <div class="sc-rail-bottom">
+                <div class="sc-rail-record"><span class="sc-rail-record-dot"></span></div>
+                <button class="sc-rail-btn" aria-label="Settings">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sc-sidebar">
+              <div class="sc-sidebar-header">Meetings</div>
+              <div class="sc-sidebar-scroll">
+                <div class="sc-group-label">TODAY</div>
+                <div class="sc-meeting sc-meeting--active">
+                  <div class="sc-meeting-title">Sprint Planning</div>
+                  <div class="sc-meeting-sub">Engineering Team</div>
+                  <div class="sc-meeting-dur">45m</div>
+                </div>
+                <div class="sc-meeting">
+                  <div class="sc-meeting-title">1:1 with Sarah</div>
+                  <div class="sc-meeting-sub">Manager Sync</div>
+                  <div class="sc-meeting-dur">30m</div>
+                </div>
+
+                <div class="sc-group-label">YESTERDAY</div>
+                <div class="sc-meeting">
+                  <div class="sc-meeting-title">Product Review</div>
+                  <div class="sc-meeting-sub">Design + Product</div>
+                  <div class="sc-meeting-dur">1h 0m</div>
+                </div>
+                <div class="sc-meeting">
+                  <div class="sc-meeting-title">Client Onboarding Call</div>
+                  <div class="sc-meeting-sub">Acme Corp</div>
+                  <div class="sc-meeting-dur">40m</div>
+                </div>
+
+                <div class="sc-group-label">PREVIOUS 7 DAYS</div>
+                <div class="sc-meeting">
+                  <div class="sc-meeting-title">Architecture Discussion</div>
+                  <div class="sc-meeting-sub">Backend Team</div>
+                  <div class="sc-meeting-dur">1h 15m</div>
+                </div>
+                <div class="sc-meeting">
+                  <div class="sc-meeting-title">Reuniao de Alinhamento</div>
+                  <div class="sc-meeting-sub">Time Brasil</div>
+                  <div class="sc-meeting-dur">25m</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Main Panel -->
+            <div class="sc-main">
+              <h2 class="sc-detail-title">Sprint Planning</h2>
+              <p class="sc-detail-sub">Engineering Team</p>
+              <div class="sc-detail-meta">
+                <span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  Created: <strong>Mar 4, 2026 at 10:00 AM</strong>
+                </span>
+                <span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  Duration: <strong>45m</strong>
+                </span>
+                <span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  Status: <strong>Complete</strong>
+                </span>
+              </div>
+
+              <!-- Tabs -->
+              <div class="sc-tabs">
+                <button class="sc-tab sc-tab--active" data-tab="summary">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+                  Summary
+                </button>
+                <button class="sc-tab" data-tab="actions">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                  Action Items
+                </button>
+                <button class="sc-tab" data-tab="transcript">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  Transcript
+                </button>
+              </div>
+
+              <!-- Summary -->
+              <div class="sc-panel" id="sc-summary">
+                <div class="sc-section-label">OVERVIEW</div>
+                <p class="sc-overview">The engineering team reviewed the backlog and committed to 34 story points for the upcoming sprint. Key focus areas include the new auth flow, performance improvements to the dashboard, and finishing the export feature.</p>
+
+                <div class="sc-section-label">KEY POINTS</div>
+                <ul class="sc-key-points">
+                  <li>Auth flow migration to OAuth2 starts this sprint</li>
+                  <li>Dashboard load time target: under 2 seconds</li>
+                  <li>Export feature needs QA before release</li>
+                  <li>Two new hires joining next Monday</li>
+                </ul>
+
+                <div class="sc-section-label">DECISIONS</div>
+                <ul class="sc-decisions">
+                  <li>Use Postgres for the new analytics service instead of ClickHouse</li>
+                  <li>Postpone mobile app work to next quarter</li>
+                </ul>
+              </div>
+
+              <!-- Action Items -->
+              <div class="sc-panel" id="sc-actions" hidden>
+                <div class="sc-action-item"><div class="sc-action-checkbox"></div><div class="sc-action-text">Start OAuth2 migration — create branch and initial PR</div><div class="sc-action-assignee">Sarah</div></div>
+                <div class="sc-action-item"><div class="sc-action-checkbox"></div><div class="sc-action-text">Implement lazy loading for dashboard charts</div><div class="sc-action-assignee">Jordan</div></div>
+                <div class="sc-action-item"><div class="sc-action-checkbox"></div><div class="sc-action-text">QA the export feature by Wednesday</div><div class="sc-action-assignee">Mark</div></div>
+                <div class="sc-action-item"><div class="sc-action-checkbox"></div><div class="sc-action-text">Prepare onboarding docs for new hires</div><div class="sc-action-assignee">Alex</div></div>
+              </div>
+
+              <!-- Transcript -->
+              <div class="sc-panel" id="sc-transcript" hidden>
+                <div class="sc-transcript-line"><span class="sc-ts">00:00:12</span><span class="sc-speaker">Alex</span><span class="sc-text">Alright, let's get started with sprint planning. We've got a few things to cover today.</span></div>
+                <div class="sc-transcript-line"><span class="sc-ts">00:00:28</span><span class="sc-speaker">Sarah</span><span class="sc-text">I've prioritized the backlog. The auth migration is the biggest item — about 13 points.</span></div>
+                <div class="sc-transcript-line"><span class="sc-ts">00:01:15</span><span class="sc-speaker">Alex</span><span class="sc-text">That makes sense. We've been putting it off. What about the dashboard performance work?</span></div>
+                <div class="sc-transcript-line"><span class="sc-ts">00:01:42</span><span class="sc-speaker">Jordan</span><span class="sc-text">I've been profiling it. Main bottleneck is the chart rendering — I can get it under 2 seconds with lazy loading.</span></div>
+                <div class="sc-transcript-line"><span class="sc-ts">00:02:30</span><span class="sc-speaker">Sarah</span><span class="sc-text">Perfect. And the export feature just needs QA at this point. Mark, can you pick that up?</span></div>
+                <div class="sc-transcript-line"><span class="sc-ts">00:02:48</span><span class="sc-speaker">Mark</span><span class="sc-text">Yeah, I'll have it tested by Wednesday.</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Overlay Pill -->
+        <div class="sc-pill-wrap">
+          <div class="sc-pill">
+            <img src="assets/icon.png" class="sc-pill-logo" alt="" width="28" height="28">
+            <div class="sc-pill-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+            </div>
+            <div class="sc-pill-rec"><span class="sc-pill-rec-inner"></span></div>
+          </div>
+          <span class="sc-pill-tag">Overlay pill</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ HOW IT WORKS ════════ -->
+  <section class="section" id="how-it-works">
+    <div class="container">
+      <p class="section-label fade-up">How it works</p>
+      <p class="section-headline fade-up">Three steps, nothing in the cloud.</p>
+      <p class="section-subtitle fade-up">No account creation. No external meeting bots.</p>
+      <div class="steps-grid fade-up" data-delay="1">
+        <div class="step-card">
+          <div class="step-number">01</div>
+          <h3>Run onboarding</h3>
+          <p>Grant permissions, pick your Whisper model, and optionally set up Ollama for local AI summaries.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">02</div>
+          <h3>Record from app or overlay</h3>
+          <p>Start recording in the main window. Minimize it and the floating overlay keeps you in control.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">03</div>
+          <h3>Get transcript and notes</h3>
+          <p>Whisper transcribes locally. AI generates a summary with key points, decisions, and action items.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ FEATURES ════════ -->
+  <section class="section" id="features">
+    <div class="container">
+      <p class="section-label fade-up">Features</p>
+      <p class="section-headline fade-up">Built and available today.</p>
+      <p class="section-subtitle fade-up">Everything ships in the desktop app. No plugins, no extensions.</p>
+      <div class="features-grid">
+        <div class="feature-card fade-up" data-delay="1"><div class="feature-number">01</div><h3>Guided onboarding</h3><p>First-run setup walks you through permissions, model downloads, and AI configuration. Choose full local, transcript-only, or cloud summaries.</p></div>
+        <div class="feature-card fade-up" data-delay="2"><div class="feature-number">02</div><h3>Local audio capture</h3><p>Captures microphone and system audio together as a single WAV file. Pause, resume, and stop from the app or the overlay.</p></div>
+        <div class="feature-card fade-up" data-delay="1"><div class="feature-number">03</div><h3>Whisper model manager</h3><p>Download and switch between tiny, base, small, and medium Whisper models directly from settings.</p></div>
+        <div class="feature-card fade-up" data-delay="2"><div class="feature-number">04</div><h3>AI provider flexibility</h3><p>Use local Ollama models for fully private summaries, or switch to OpenAI and Anthropic with your own API keys.</p></div>
+        <div class="feature-card fade-up" data-delay="1"><div class="feature-number">05</div><h3>Floating overlay</h3><p>Minimize the app and a compact floating pill stays on screen with recording controls, duration, and waveform.</p></div>
+        <div class="feature-card fade-up" data-delay="2"><div class="feature-number">06</div><h3>Re-transcribe anytime</h3><p>Re-run transcription and summarization from the stored audio using a different model or provider.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ PROCESSING OPTIONS ════════ -->
+  <section class="section" id="privacy">
+    <div class="container">
+      <p class="section-label fade-up">Processing</p>
+      <p class="section-headline fade-up">Local by default.</p>
+      <p class="section-subtitle fade-up">Transcription is always local Whisper. Cloud usage only applies to AI summaries, and only when you enable it.</p>
+      <div class="privacy-cards">
+        <div class="privacy-card privacy-card--active fade-up" data-delay="1">
+          <div class="privacy-badge">Default</div>
+          <h3>Local Summaries</h3>
+          <dl>
+            <div><dt>Transcription</dt><dd>Local Whisper</dd></div>
+            <div><dt>AI Notes</dt><dd>Ollama local model</dd></div>
+            <div><dt>Data leaving device</dt><dd class="highlight-green">None</dd></div>
+          </dl>
+        </div>
+        <div class="privacy-card fade-up" data-delay="2">
+          <h3>Transcript Only</h3>
+          <dl>
+            <div><dt>Transcription</dt><dd>Local Whisper</dd></div>
+            <div><dt>AI Notes</dt><dd>Disabled</dd></div>
+            <div><dt>Data leaving device</dt><dd class="highlight-green">None</dd></div>
+          </dl>
+        </div>
+        <div class="privacy-card fade-up" data-delay="3">
+          <h3>Cloud Summaries</h3>
+          <dl>
+            <div><dt>Transcription</dt><dd>Local Whisper</dd></div>
+            <div><dt>AI Notes</dt><dd>OpenAI or Anthropic</dd></div>
+            <div><dt>Data leaving device</dt><dd class="highlight-yellow">Transcript text only</dd></div>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ DOWNLOAD ════════ -->
+  <section class="section section--cta" id="download">
+    <div class="container">
+      <p class="section-headline fade-up">Try Frajola.</p>
+      <p class="section-subtitle fade-up">Free and open source. Download the installer for your platform.</p>
+      <div class="download-grid">
+        <a href="downloads/frajola_0.1.1_aarch64.dmg" class="download-card fade-up" data-delay="1" download>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          <span class="download-platform">macOS (Apple Silicon)</span>
+          <span class="download-ext">.dmg arm64</span>
+        </a>
+        <a href="downloads/frajola_0.1.1_x64.dmg" class="download-card fade-up" data-delay="2" download>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          <span class="download-platform">macOS (Intel)</span>
+          <span class="download-ext">.dmg x64</span>
+        </a>
+        <a href="downloads/frajola_0.1.1_x64_en-US.msi" class="download-card fade-up" data-delay="3" download>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+          <span class="download-platform">Windows</span>
+          <span class="download-ext">.msi</span>
+        </a>
+        <a href="downloads/frajola_0.1.1_amd64.AppImage" class="download-card fade-up" data-delay="4" download>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.504 0c-.155 0-.311.015-.466.045C9.173.723 8.12 3.576 9.241 6.13c.196.434.49.922.743 1.283-1.298.19-2.85.736-4.277 1.556-2.574 1.478-3.863 3.307-3.874 3.324A4.32 4.32 0 0 0 1 14.583c0 2.456 2.212 4.327 5.178 4.327 1.065 0 2.08-.247 2.97-.63.108.345.234.682.397.998.553 1.076 1.362 1.884 2.455 2.422 1.09.54 2.348.745 3.684.412 1.02-.255 1.81-.782 2.38-1.451.43-.504.704-1.091.9-1.665 1.823.155 3.58-.385 4.887-1.556 1.438-1.286 2.15-3.12 2.15-4.857 0-2.226-1.252-4.33-3.243-5.515-.218-.13-.448-.245-.683-.35.078-.522.078-1.066-.017-1.63C21.66 2.858 19.707.607 17.131.091A5.402 5.402 0 0 0 15.818 0c-1.146 0-2.18.455-3.008 1.182A4.42 4.42 0 0 0 12.504 0z"/></svg>
+          <span class="download-platform">Linux</span>
+          <span class="download-ext">.AppImage</span>
+        </a>
+      </div>
+      <p class="download-note fade-up">Version 0.1.1 — <a href="https://github.com/victorlucss/frajola/releases/tag/v0.1.1" target="_blank" rel="noopener noreferrer">Release notes</a></p>
+      <div class="roadmap-cta fade-up"><a href="next-features.html" class="btn btn-ghost btn-md">View Roadmap</a></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand"><img src="assets/icon.png" alt="" width="24" height="24"><span>Frajola</span></div>
+      <nav class="footer-links">
+        <a href="docs/">Docs</a>
+        <a href="next-features.html">Roadmap</a>
+        <a href="https://github.com/victorlucss/frajola" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+      <p class="footer-copy">Made in Brazil.</p>
+    </div>
+  </footer>
+
+  <script defer src="js/animations.js"></script>
+  <script defer src="js/nav.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Tab switching
+      document.querySelectorAll('.sc-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.sc-tab').forEach(t => t.classList.remove('sc-tab--active'));
+          document.querySelectorAll('.sc-panel').forEach(p => p.hidden = true);
+          tab.classList.add('sc-tab--active');
+          const panel = document.getElementById('sc-' + tab.dataset.tab);
+          if (panel) panel.hidden = false;
+        });
+      });
+      // Meeting selection (visual only)
+      document.querySelectorAll('.sc-meeting').forEach(item => {
+        item.addEventListener('click', () => {
+          document.querySelectorAll('.sc-meeting').forEach(m => m.classList.remove('sc-meeting--active'));
+          item.classList.add('sc-meeting--active');
+        });
+      });
+    });
+  </script>
+</body>
+</html>
