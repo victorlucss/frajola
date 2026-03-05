@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Changelog — Frajola</title>
+  <meta name="description" content="Frajola release history and changelog.">
+  <link rel="icon" type="image/png" href="assets/icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/blocks.css">
+  <style>
+    .changelog {
+      padding: 140px 0 80px;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    .changelog h1 {
+      font-size: 40px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .changelog .intro {
+      color: var(--text-muted);
+      margin-bottom: 48px;
+    }
+    .release {
+      margin-bottom: 48px;
+      padding-bottom: 48px;
+      border-bottom: 1px solid var(--border);
+    }
+    .release:last-child {
+      border-bottom: none;
+    }
+    .release-header {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .release-version {
+      font-size: 24px;
+      font-weight: 600;
+    }
+    .release-date {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .release-tag {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .release-tag--latest {
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+    .release h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 24px;
+      margin-bottom: 12px;
+    }
+    .release ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .release li {
+      position: relative;
+      padding-left: 20px;
+      color: var(--text-muted);
+      line-height: 1.8;
+      font-size: 15px;
+    }
+    .release li::before {
+      content: '•';
+      position: absolute;
+      left: 0;
+      color: var(--text-dim);
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+    .back-link:hover {
+      color: var(--text);
+    }
+    .back-link svg {
+      width: 16px;
+      height: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">
+        <img src="assets/icon.png" alt="" width="32" height="32">
+        <span>Frajola</span>
+      </a>
+      <div class="nav-links">
+        <a href="/#features">Features</a>
+        <a href="/#processing">Processing</a>
+        <a href="next-features.html">Roadmap</a>
+        <a href="docs/">Docs</a>
+      </div>
+      <a href="/#download" class="nav-cta">Download</a>
+    </div>
+  </nav>
+
+  <main class="changelog container">
+    <a href="/" class="back-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Back to home
+    </a>
+    
+    <h1>Changelog</h1>
+    <p class="intro">Release history for Frajola.</p>
+
+    <div class="release">
+      <div class="release-header">
+        <span class="release-version">0.1.1</span>
+        <span class="release-date">March 5, 2026</span>
+        <span class="release-tag release-tag--latest">Latest</span>
+      </div>
+      
+      <h3>Features</h3>
+      <ul>
+        <li>Onboarding flow with guided setup for permissions, Whisper models, and AI providers</li>
+        <li>Floating overlay pill for recording controls when app is minimized</li>
+        <li>Audio player for meeting playback</li>
+        <li>Meeting auto-detection (experimental)</li>
+        <li>Dark/light theme support</li>
+      </ul>
+
+      <h3>Improvements</h3>
+      <ul>
+        <li>Improved audio capture reliability on macOS</li>
+        <li>Better error handling for Whisper transcription</li>
+        <li>Settings page redesign with tabbed interface</li>
+        <li>Reduced memory usage during recording</li>
+      </ul>
+
+      <h3>Bug Fixes</h3>
+      <ul>
+        <li>Fixed overlay not appearing on some Windows configurations</li>
+        <li>Fixed transcript timestamps being off by a few seconds</li>
+        <li>Fixed crash when switching Whisper models during transcription</li>
+      </ul>
+    </div>
+
+    <div class="release">
+      <div class="release-header">
+        <span class="release-version">0.1.0</span>
+        <span class="release-date">February 28, 2026</span>
+      </div>
+      
+      <h3>Initial Release</h3>
+      <ul>
+        <li>Local audio recording (microphone + system audio)</li>
+        <li>Whisper-based local transcription</li>
+        <li>AI-powered meeting summaries (Ollama, OpenAI, Anthropic)</li>
+        <li>Meeting library with search</li>
+        <li>Export to Markdown and plain text</li>
+        <li>macOS, Windows, and Linux support</li>
+      </ul>
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <img src="assets/icon.png" alt="" width="24" height="24">
+        <span>Frajola</span>
+      </div>
+      <nav class="footer-links">
+        <a href="docs/">Docs</a>
+        <a href="next-features.html">Roadmap</a>
+        <a href="changelog.html">Changelog</a>
+      </nav>
+      <p class="footer-copy">Made in Brazil 🇧🇷</p>
+    </div>
+  </footer>
+
+</body>
+</html>
