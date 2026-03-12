@@ -127,3 +127,128 @@ fn rms(samples: &[f32]) -> f32 {
     let sum_sq: f32 = samples.iter().map(|s| s * s).sum();
     (sum_sq / samples.len() as f32).sqrt()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::audio::encoder::WavEncoder;
+
+    /// Create a test WAV file with a sine tone at the given sample rate and channels.
+    fn write_test_wav(path: &std::path::Path, sample_rate: u32, channels: u16, duration_secs: f32) {
+        let n_samples = (sample_rate as f32 * duration_secs) as usize;
+        let freq = 440.0f32;
+
+        let mut enc = WavEncoder::new(path, sample_rate, channels).unwrap();
+        for i in 0..n_samples {
+            let sample =
+                (2.0 * std::f32::consts::PI * freq * i as f32 / sample_rate as f32).sin() * 0.5;
+            for _ in 0..channels {
+                enc.write_f32_samples(&[sample]).unwrap();
+            }
+        }
+        enc.finalize().unwrap();
+    }
+
+    /// Create a silent WAV file.
+    fn write_silent_wav(path: &std::path::Path, sample_rate: u32, channels: u16, duration_secs: f32) {
+        let n_samples = (sample_rate as f32 * duration_secs) as usize;
+        let samples = vec![0.0f32; n_samples * channels as usize];
+
+        let mut enc = WavEncoder::new(path, sample_rate, channels).unwrap();
+        enc.write_f32_samples(&samples).unwrap();
+        enc.finalize().unwrap();
+    }
+
+    #[test]
+    fn load_mono_wav_returns_none_energy() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("mono.wav");
+        write_test_wav(&path, 48000, 1, 0.5);
+
+        let (samples, energy) = load_and_resample_with_energy(&path).unwrap();
+        assert!(energy.is_none(), "Mono WAV should not produce energy frames");
+        // Resampled to 16kHz: 0.5s * 16000 = ~8000 samples
+        assert!(samples.len() > 7000 && samples.len() < 9000,
+            "Expected ~8000 samples, got {}", samples.len());
+    }
+
+    #[test]
+    fn load_stereo_wav_returns_energy_frames() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("stereo.wav");
+        write_test_wav(&path, 48000, 2, 0.5);
+
+        let (samples, energy) = load_and_resample_with_energy(&path).unwrap();
+        assert!(energy.is_some(), "Stereo WAV should produce energy frames");
+        let frames = energy.unwrap();
+        // 0.5s at 100ms frames = 5 frames (last partial frame may be dropped)
+        assert!(frames.len() >= 4 && frames.len() <= 5,
+            "Expected 4-5 energy frames, got {}", frames.len());
+        // Each frame should have non-zero energy since we wrote a tone
+        for frame in &frames {
+            assert!(frame.mic_rms > 0.01, "mic_rms too low: {}", frame.mic_rms);
+            assert!(frame.sys_rms > 0.01, "sys_rms too low: {}", frame.sys_rms);
+        }
+        assert!(samples.len() > 7000 && samples.len() < 9000);
+    }
+
+    #[test]
+    fn load_16khz_wav_skips_resampling() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("16k.wav");
+        write_test_wav(&path, 16000, 1, 1.0);
+
+        let (samples, _) = load_and_resample_with_energy(&path).unwrap();
+        // Already at 16kHz, should be exactly 16000 samples
+        assert_eq!(samples.len(), 16000);
+    }
+
+    #[test]
+    fn silent_wav_has_near_zero_rms() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("silent.wav");
+        write_silent_wav(&path, 48000, 1, 1.0);
+
+        let (samples, _) = load_and_resample_with_energy(&path).unwrap();
+
+        let audio_rms = {
+            let sum_sq: f64 = samples.iter().map(|&s| (s as f64) * (s as f64)).sum();
+            (sum_sq / samples.len().max(1) as f64).sqrt()
+        };
+        assert!(audio_rms < 1e-4,
+            "Silent WAV should have RMS < 1e-4, got {audio_rms:.6}");
+    }
+
+    #[test]
+    fn tone_wav_has_meaningful_rms() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("tone.wav");
+        write_test_wav(&path, 48000, 1, 1.0);
+
+        let (samples, _) = load_and_resample_with_energy(&path).unwrap();
+
+        let audio_rms = {
+            let sum_sq: f64 = samples.iter().map(|&s| (s as f64) * (s as f64)).sum();
+            (sum_sq / samples.len().max(1) as f64).sqrt()
+        };
+        assert!(audio_rms > 0.1,
+            "Tone WAV should have meaningful RMS, got {audio_rms:.6}");
+    }
+
+    #[test]
+    fn rms_of_empty_is_zero() {
+        assert_eq!(rms(&[]), 0.0);
+    }
+
+    #[test]
+    fn rms_of_silence_is_zero() {
+        assert_eq!(rms(&[0.0; 1000]), 0.0);
+    }
+
+    #[test]
+    fn rms_of_dc_signal() {
+        let samples = vec![0.5f32; 1000];
+        let r = rms(&samples);
+        assert!((r - 0.5).abs() < 1e-6, "RMS of DC 0.5 should be 0.5, got {r}");
+    }
+}

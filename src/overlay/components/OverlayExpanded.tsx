@@ -17,6 +17,7 @@ interface Props {
   elapsedSeconds: number;
   meetings: DetectedMeeting[];
   error: string | null;
+  silenceWarning?: boolean;
   onCollapse: () => void;
   onStartRecording: (micDeviceId?: string) => Promise<void>;
   onStopRecording: () => Promise<void>;
@@ -39,6 +40,7 @@ export default function OverlayExpanded({
   elapsedSeconds,
   meetings,
   error,
+  silenceWarning,
   onCollapse,
   onStartRecording,
   onStopRecording,
@@ -99,6 +101,14 @@ export default function OverlayExpanded({
           {status === "paused" && (
             <div className="mt-1 text-xs text-yellow-400">Paused</div>
           )}
+        </div>
+      )}
+
+      {/* Silence warning */}
+      {silenceWarning && (
+        <div className="mx-4 mb-2 rounded-lg bg-yellow-500/15 px-3 py-2 text-xs text-yellow-300">
+          <span className="font-medium">No audio detected.</span>{" "}
+          Check your microphone permissions and selected device.
         </div>
       )}
 
