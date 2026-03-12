@@ -105,6 +105,7 @@ pub async fn start_recording(
         started_at: Instant::now(),
         stop_flag,
         paused_flag,
+        silence_warning: handles.silence_warning,
         writer_thread: Some(handles.writer_thread),
         _mic_stream: handles.mic_stream,
         _system_stream: handles.system_stream,
@@ -202,6 +203,20 @@ pub async fn get_recording_status(
 #[tauri::command]
 pub fn list_audio_devices() -> Result<Vec<AudioDevice>, AppError> {
     devices::list_all_devices().map_err(AppError::Audio)
+}
+
+/// Check whether the writer thread has detected silent mic audio.
+#[tauri::command]
+pub async fn check_silence_warning(
+    recording: State<'_, RecordingState>,
+) -> Result<bool, AppError> {
+    let Ok(lock) = recording.active.lock() else {
+        return Ok(false);
+    };
+    Ok(lock
+        .as_ref()
+        .map(|a| a.silence_warning.load(Ordering::Relaxed))
+        .unwrap_or(false))
 }
 
 /// Attempt a short capture to trigger/check macOS microphone + system audio permissions.

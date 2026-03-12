@@ -16,6 +16,7 @@ pub struct ActiveRecording {
     pub started_at: Instant,
     pub stop_flag: Arc<AtomicBool>,
     pub paused_flag: Arc<AtomicBool>,
+    pub silence_warning: Arc<AtomicBool>,
     pub writer_thread: Option<JoinHandle<Result<(), String>>>,
     pub _mic_stream: Option<Stream>,
     pub _system_stream: Option<Stream>,

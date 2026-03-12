@@ -147,6 +147,7 @@ pub fn run() {
             commands::recording::open_audio_permission_settings,
             commands::recording::open_microphone_permission_settings,
             commands::recording::check_audio_permissions,
+            commands::recording::check_silence_warning,
             commands::meetings::get_meeting_detail,
             commands::transcribe::get_whisper_models,
             commands::transcribe::download_model,

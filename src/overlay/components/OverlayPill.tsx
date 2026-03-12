@@ -16,6 +16,7 @@ interface Props {
   status: RecordingStatus;
   elapsedSeconds: number;
   meetings: DetectedMeeting[];
+  silenceWarning?: boolean;
   onExpand: () => void;
   onStartRecording: (micDeviceId?: string) => Promise<void>;
   onStopRecording: () => Promise<void>;
@@ -37,6 +38,7 @@ function formatTime(seconds: number): string {
 export default function OverlayPill({
   status,
   elapsedSeconds,
+  silenceWarning,
   onExpand,
   onStartRecording,
   onStopRecording,
@@ -170,7 +172,7 @@ export default function OverlayPill({
             <>
               {/* Recording dot + timer */}
               <span className="flex items-center gap-1 shrink-0">
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-red-500 animate-pulse" />
+                <span className={`h-1.5 w-1.5 shrink-0 rounded-full animate-pulse ${silenceWarning ? "bg-yellow-400" : "bg-red-500"}`} />
                 <span className="font-mono text-[10px] font-semibold text-text-primary tabular-nums whitespace-nowrap">
                   {formatTime(elapsedSeconds)}
                 </span>
