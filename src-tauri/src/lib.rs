@@ -1,7 +1,8 @@
 mod ai;
 mod audio;
 mod commands;
-mod db;
+pub mod db;
+pub mod dictation;
 mod error;
 mod system;
 mod transcribe;
@@ -12,11 +13,13 @@ use std::sync::Mutex;
 
 use audio::state::RecordingState;
 use db::Database;
+use dictation::state::DictationState;
 use tauri::{Manager, RunEvent};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -46,6 +49,16 @@ pub fn run() {
             app.manage(RecordingState {
                 active: Mutex::new(None),
             });
+            app.manage(DictationState::new());
+
+            // Register global hotkey for dictation
+            register_dictation_hotkey(app.handle())?;
+
+            // Request permissions on macOS
+            #[cfg(target_os = "macos")]
+            {
+                dictation::apple_speech::request_permissions();
+            }
 
             // On non-macOS: use native decorations and clear vibrancy effects
             #[cfg(not(target_os = "macos"))]
@@ -163,12 +176,37 @@ pub fn run() {
             commands::overlay::collapse_overlay,
             commands::overlay::set_overlay_pill_width,
             commands::overlay::compact_overlay,
+            // Dictation commands
+            commands::dictation::get_dictation_status,
+            commands::dictation::check_accessibility,
+            commands::dictation::open_accessibility_settings,
+            commands::dictation::get_frontmost_app_name,
+            commands::dictation::get_dictation_dictionary,
+            commands::dictation::add_dictation_dictionary_entry,
+            commands::dictation::remove_dictation_dictionary_entry,
+            commands::dictation::get_dictation_snippets,
+            commands::dictation::add_dictation_snippet,
+            commands::dictation::remove_dictation_snippet,
+            commands::dictation::get_dictation_voice_commands,
+            commands::dictation::add_dictation_voice_command,
+            commands::dictation::remove_dictation_voice_command,
+            commands::dictation::get_dictation_history,
+            commands::dictation::clear_dictation_history,
+            commands::dictation::get_dictation_config,
+            commands::dictation::save_dictation_config,
+            commands::dictation::start_dictation,
+            commands::dictation::stop_dictation,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|app_handle, event| {
             match event {
                 RunEvent::ExitRequested { .. } => {
+                    // Stop active dictation on exit
+                    if let Some(dictation_state) = app_handle.try_state::<DictationState>() {
+                        dictation_state.stop();
+                    }
+
                     if let Some(recording_state) = app_handle.try_state::<RecordingState>() {
                         let mut lock = match recording_state.active.lock() {
                             Ok(l) => l,
@@ -209,4 +247,43 @@ pub fn run() {
                 _ => {}
             }
         });
+}
+
+/// Register global hotkey for dictation (Alt+Space on macOS, Ctrl+Alt+Space elsewhere).
+fn register_dictation_hotkey(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+    use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
+
+    let hotkey = if cfg!(target_os = "macos") {
+        "Alt+Space"
+    } else {
+        "Ctrl+Alt+Space"
+    };
+
+    app.global_shortcut().on_shortcut(hotkey, move |app, _shortcut, event| {
+        // Only handle key press (not release) for toggle mode
+        if event.state != ShortcutState::Pressed {
+            return;
+        }
+
+        let app_handle = app.clone();
+        tauri::async_runtime::spawn(async move {
+            let dictation_state = app_handle.state::<DictationState>();
+
+            if dictation_state.is_active() {
+                // Stop dictation
+                let db = app_handle.state::<Database>();
+                let _ = commands::dictation::stop_dictation(db, dictation_state, app_handle.clone()).await;
+            } else {
+                // Start dictation
+                let db = app_handle.state::<Database>();
+                let recording = app_handle.state::<audio::state::RecordingState>();
+                if let Err(e) = commands::dictation::start_dictation(db, dictation_state, recording, app_handle.clone()).await {
+                    log::error!("Failed to start dictation: {}", e);
+                }
+            }
+        });
+    })?;
+
+    log::info!("Dictation hotkey registered: {}", hotkey);
+    Ok(())
 }

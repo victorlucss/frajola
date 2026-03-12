@@ -44,7 +44,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; connect-src 'self' http://localhost:11434; style-src 'self' 'unsafe-inline'; media-src 'self' asset: https://asset.localhost",
+      "csp": "default-src 'self'; connect-src 'self' http://localhost:11434 http://localhost:1234 https://api.openai.com https://api.anthropic.com https://*; style-src 'self' 'unsafe-inline'; media-src 'self' asset: https://asset.localhost",
       "assetProtocol": {
         "enable": true,
         "scope": ["$APPDATA/recordings/*"]

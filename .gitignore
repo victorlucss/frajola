@@ -27,3 +27,7 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Swift bridge build artifacts
+src-tauri/swift-bridge/lib/
+*.a

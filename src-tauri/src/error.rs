@@ -11,6 +11,9 @@ pub enum AppError {
     #[error("Audio error: {0}")]
     Audio(String),
 
+    #[error("Dictation error: {0}")]
+    Dictation(String),
+
     #[error("{0}")]
     General(String),
 }

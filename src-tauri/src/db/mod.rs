@@ -1,4 +1,5 @@
 mod connection;
+pub mod dictation;
 pub mod meetings;
 mod migrations;
 pub mod settings;
