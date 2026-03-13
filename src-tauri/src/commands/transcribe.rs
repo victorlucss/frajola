@@ -81,6 +81,27 @@ pub async fn transcribe_meeting(
         }
     };
 
+    // 5b. Validate audio has meaningful content
+    let audio_rms = {
+        let sum_sq: f64 = samples.iter().map(|&s| (s as f64) * (s as f64)).sum();
+        (sum_sq / samples.len().max(1) as f64).sqrt()
+    };
+    log::info!(
+        "Audio loaded: {} samples ({:.1}s), RMS={:.6}, stereo={}",
+        samples.len(),
+        samples.len() as f64 / 16000.0,
+        audio_rms,
+        energy.is_some()
+    );
+    if audio_rms < 1e-4 {
+        db.update_meeting_status(meeting_id, "failed")?;
+        return Err(AppError::General(
+            "The recording appears to be silent. Check your microphone permissions in \
+             System Settings > Privacy & Security > Microphone."
+                .into(),
+        ));
+    }
+
     // 6. Run Whisper inference (CPU-intensive, run in blocking thread)
     // Let Whisper auto-detect the language from the audio
     let whisper_result = {

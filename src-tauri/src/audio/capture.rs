@@ -14,6 +14,8 @@ pub struct CaptureHandles {
     pub writer_thread: JoinHandle<Result<(), String>>,
     /// If system audio capture failed, contains the reason.
     pub system_audio_error: Option<String>,
+    /// Set to `true` if the mic appears silent after the first few seconds of recording.
+    pub silence_warning: Arc<AtomicBool>,
 }
 
 /// Tagged audio chunk so the writer can distinguish sources.
@@ -129,6 +131,9 @@ pub fn start_capture(
     // --- Writer thread ---
     let writer_stop = stop_flag.clone();
     let writer_paused = paused_flag.clone();
+    let silence_flag = Arc::new(AtomicBool::new(false));
+    let writer_silence = silence_flag.clone();
+    let writer_sample_rate = sample_rate;
     let writer_thread = thread::spawn(move || {
         writer_loop(
             rx,
@@ -137,6 +142,8 @@ pub fn start_capture(
             writer_paused,
             has_system_audio,
             sys_resample_ratio,
+            writer_silence,
+            writer_sample_rate,
         )
     });
 
@@ -145,6 +152,7 @@ pub fn start_capture(
         system_stream,
         writer_thread,
         system_audio_error,
+        silence_warning: silence_flag,
     })
 }
 
@@ -254,9 +262,17 @@ fn writer_loop(
     paused_flag: Arc<AtomicBool>,
     has_system_audio: bool,
     sys_resample_ratio: Option<f64>,
+    silence_flag: Arc<AtomicBool>,
+    sample_rate: u32,
 ) -> Result<(), String> {
     let mut mic_buf: Vec<f32> = Vec::new();
     let mut sys_buf: Vec<f32> = Vec::new();
+
+    // Silence detection: accumulate mic energy for the first 3 seconds
+    let mut mic_samples_counted: u64 = 0;
+    let mut mic_sum_sq: f64 = 0.0;
+    let silence_check_samples = (sample_rate as u64) * 3;
+    let mut silence_checked = false;
 
     loop {
         match rx.recv_timeout(std::time::Duration::from_millis(100)) {
@@ -266,7 +282,26 @@ fn writer_loop(
                 }
 
                 match chunk {
-                    AudioChunk::Mic(samples) => mic_buf.extend_from_slice(&samples),
+                    AudioChunk::Mic(samples) => {
+                        if !silence_checked {
+                            for &s in &samples {
+                                mic_sum_sq += (s as f64) * (s as f64);
+                            }
+                            mic_samples_counted += samples.len() as u64;
+                            if mic_samples_counted >= silence_check_samples {
+                                let rms =
+                                    (mic_sum_sq / mic_samples_counted as f64).sqrt();
+                                if rms < 1e-4 {
+                                    silence_flag.store(true, Ordering::Relaxed);
+                                    log::warn!(
+                                        "Mic audio appears silent after 3s (RMS={rms:.6})"
+                                    );
+                                }
+                                silence_checked = true;
+                            }
+                        }
+                        mic_buf.extend_from_slice(&samples);
+                    }
                     AudioChunk::System(samples) => {
                         let resampled = match sys_resample_ratio {
                             Some(ratio) => resample_linear(&samples, ratio),
@@ -386,4 +421,245 @@ fn flush_remaining(
     mic_buf.clear();
     sys_buf.clear();
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // --- Linear resampling tests ---
+
+    #[test]
+    fn resample_linear_empty_input() {
+        assert!(resample_linear(&[], 0.5).is_empty());
+    }
+
+    #[test]
+    fn resample_linear_same_rate() {
+        let input = vec![1.0, 2.0, 3.0, 4.0];
+        let output = resample_linear(&input, 1.0);
+        assert_eq!(output.len(), input.len());
+        for (a, b) in input.iter().zip(&output) {
+            assert!((a - b).abs() < 1e-6);
+        }
+    }
+
+    #[test]
+    fn resample_linear_downsample_halves() {
+        let input: Vec<f32> = (0..100).map(|i| i as f32).collect();
+        let output = resample_linear(&input, 0.5);
+        assert_eq!(output.len(), 50);
+        // First sample should be close to 0.0
+        assert!(output[0].abs() < 1e-6);
+    }
+
+    #[test]
+    fn resample_linear_upsample_doubles() {
+        let input = vec![0.0, 1.0, 0.0];
+        let output = resample_linear(&input, 2.0);
+        assert_eq!(output.len(), 6);
+        // Should interpolate smoothly
+        assert!(output[0].abs() < 1e-6); // 0.0
+        assert!(output[2] > 0.4); // near 1.0
+    }
+
+    #[test]
+    fn resample_linear_preserves_silence() {
+        let input = vec![0.0f32; 1000];
+        let output = resample_linear(&input, 0.333);
+        for s in &output {
+            assert_eq!(*s, 0.0, "Silence should remain silent after resampling");
+        }
+    }
+
+    // --- Interleave tests ---
+
+    #[test]
+    fn interleave_stereo_basic() {
+        let left = vec![1.0, 3.0, 5.0];
+        let right = vec![2.0, 4.0, 6.0];
+        let stereo = interleave_stereo(&left, &right);
+        assert_eq!(stereo, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
+    }
+
+    #[test]
+    fn interleave_stereo_unequal_lengths() {
+        let left = vec![1.0, 3.0, 5.0];
+        let right = vec![2.0, 4.0];
+        let stereo = interleave_stereo(&left, &right);
+        // Should only interleave min(3,2)=2 frames
+        assert_eq!(stereo, vec![1.0, 2.0, 3.0, 4.0]);
+    }
+
+    // --- Silence detection integration test ---
+
+    #[test]
+    fn writer_loop_detects_silence() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("silence_test.wav");
+        let encoder = WavEncoder::new(&path, 48000, 1).unwrap();
+
+        let (tx, rx) = mpsc::channel::<AudioChunk>();
+        let stop_flag = Arc::new(AtomicBool::new(false));
+        let paused_flag = Arc::new(AtomicBool::new(false));
+        let silence_flag = Arc::new(AtomicBool::new(false));
+        let silence_clone = silence_flag.clone();
+        let stop_clone = stop_flag.clone();
+
+        let handle = thread::spawn(move || {
+            writer_loop(
+                rx, encoder, stop_clone, paused_flag, false, None,
+                silence_clone, 48000,
+            )
+        });
+
+        // Send 4 seconds of silent mic audio in chunks
+        for _ in 0..400 {
+            tx.send(AudioChunk::Mic(vec![0.0f32; 480])).unwrap();
+        }
+
+        // Give the writer thread a moment to process
+        std::thread::sleep(std::time::Duration::from_millis(100));
+
+        // Stop and join
+        stop_flag.store(true, Ordering::Relaxed);
+        drop(tx);
+        handle.join().unwrap().unwrap();
+
+        assert!(silence_flag.load(Ordering::Relaxed),
+            "Silence flag should be set for silent audio");
+    }
+
+    #[test]
+    fn writer_loop_no_silence_for_tone() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("tone_test.wav");
+        let encoder = WavEncoder::new(&path, 48000, 1).unwrap();
+
+        let (tx, rx) = mpsc::channel::<AudioChunk>();
+        let stop_flag = Arc::new(AtomicBool::new(false));
+        let paused_flag = Arc::new(AtomicBool::new(false));
+        let silence_flag = Arc::new(AtomicBool::new(false));
+        let silence_clone = silence_flag.clone();
+        let stop_clone = stop_flag.clone();
+
+        let handle = thread::spawn(move || {
+            writer_loop(
+                rx, encoder, stop_clone, paused_flag, false, None,
+                silence_clone, 48000,
+            )
+        });
+
+        // Send 4 seconds of 440Hz tone in chunks
+        let freq = 440.0f32;
+        let sample_rate = 48000.0f32;
+        for chunk_idx in 0..400 {
+            let chunk: Vec<f32> = (0..480)
+                .map(|i| {
+                    let t = (chunk_idx * 480 + i) as f32 / sample_rate;
+                    (2.0 * std::f32::consts::PI * freq * t).sin() * 0.5
+                })
+                .collect();
+            tx.send(AudioChunk::Mic(chunk)).unwrap();
+        }
+
+        std::thread::sleep(std::time::Duration::from_millis(100));
+        stop_flag.store(true, Ordering::Relaxed);
+        drop(tx);
+        handle.join().unwrap().unwrap();
+
+        assert!(!silence_flag.load(Ordering::Relaxed),
+            "Silence flag should NOT be set for audio with tone");
+    }
+
+    // --- Full round-trip: write WAV → read → check RMS ---
+
+    #[test]
+    fn roundtrip_silent_wav_detected_by_rms_check() {
+        use crate::transcribe::resample::load_and_resample_with_energy;
+
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("roundtrip_silent.wav");
+
+        // Simulate a recording that produces silence (e.g., no mic permission)
+        let encoder = WavEncoder::new(&path, 48000, 1).unwrap();
+        let (tx, rx) = mpsc::channel::<AudioChunk>();
+        let stop_flag = Arc::new(AtomicBool::new(false));
+        let paused_flag = Arc::new(AtomicBool::new(false));
+        let silence_flag = Arc::new(AtomicBool::new(false));
+        let stop_clone = stop_flag.clone();
+
+        let handle = thread::spawn(move || {
+            writer_loop(
+                rx, encoder, stop_clone, paused_flag, false, None,
+                silence_flag, 48000,
+            )
+        });
+
+        // Send 1 second of silence
+        for _ in 0..100 {
+            tx.send(AudioChunk::Mic(vec![0.0f32; 480])).unwrap();
+        }
+        stop_flag.store(true, Ordering::Relaxed);
+        drop(tx);
+        handle.join().unwrap().unwrap();
+
+        // Now load the WAV through the transcription pipeline
+        let (samples, _) = load_and_resample_with_energy(&path).unwrap();
+
+        let audio_rms = {
+            let sum_sq: f64 = samples.iter().map(|&s| (s as f64) * (s as f64)).sum();
+            (sum_sq / samples.len().max(1) as f64).sqrt()
+        };
+
+        assert!(audio_rms < 1e-4,
+            "Silent recording should be caught by RMS check (got {audio_rms:.6})");
+    }
+
+    #[test]
+    fn roundtrip_tone_wav_passes_rms_check() {
+        use crate::transcribe::resample::load_and_resample_with_energy;
+
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("roundtrip_tone.wav");
+
+        let encoder = WavEncoder::new(&path, 48000, 1).unwrap();
+        let (tx, rx) = mpsc::channel::<AudioChunk>();
+        let stop_flag = Arc::new(AtomicBool::new(false));
+        let paused_flag = Arc::new(AtomicBool::new(false));
+        let silence_flag = Arc::new(AtomicBool::new(false));
+        let stop_clone = stop_flag.clone();
+
+        let handle = thread::spawn(move || {
+            writer_loop(
+                rx, encoder, stop_clone, paused_flag, false, None,
+                silence_flag, 48000,
+            )
+        });
+
+        // Send 1 second of 440Hz tone
+        let freq = 440.0f32;
+        for chunk_idx in 0..100 {
+            let chunk: Vec<f32> = (0..480)
+                .map(|i| {
+                    let t = (chunk_idx * 480 + i) as f32 / 48000.0;
+                    (2.0 * std::f32::consts::PI * freq * t).sin() * 0.5
+                })
+                .collect();
+            tx.send(AudioChunk::Mic(chunk)).unwrap();
+        }
+        stop_flag.store(true, Ordering::Relaxed);
+        drop(tx);
+        handle.join().unwrap().unwrap();
+
+        let (samples, _) = load_and_resample_with_energy(&path).unwrap();
+
+        let audio_rms = {
+            let sum_sq: f64 = samples.iter().map(|&s| (s as f64) * (s as f64)).sum();
+            (sum_sq / samples.len().max(1) as f64).sqrt()
+        };
+
+        assert!(audio_rms > 0.1,
+            "Tone recording should pass RMS check (got {audio_rms:.6})");
+    }
 }

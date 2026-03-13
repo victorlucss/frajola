@@ -49,6 +49,7 @@ export default function OverlayApp() {
           elapsedSeconds={recording.elapsedSeconds}
           meetings={meetings}
           error={recording.error}
+          silenceWarning={recording.silenceWarning}
           onCollapse={handleCollapse}
           onStartRecording={recording.startRecording}
           onStopRecording={recording.stopRecording}
@@ -60,6 +61,7 @@ export default function OverlayApp() {
           status={recording.status}
           elapsedSeconds={recording.elapsedSeconds}
           meetings={meetings}
+          silenceWarning={recording.silenceWarning}
           onExpand={handleExpand}
           onStartRecording={recording.startRecording}
           onStopRecording={recording.stopRecording}

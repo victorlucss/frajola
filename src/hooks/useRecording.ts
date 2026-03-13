@@ -24,6 +24,7 @@ export interface UseRecordingReturn {
   meetingId: number | null;
   elapsedSeconds: number;
   error: string | null;
+  silenceWarning: boolean;
   startRecording: (micDeviceId?: string) => Promise<void>;
   stopRecording: () => Promise<void>;
   pauseRecording: () => Promise<void>;
@@ -35,6 +36,7 @@ export function useRecording(options?: UseRecordingOptions): UseRecordingReturn 
   const [meetingId, setMeetingId] = useState<number | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [silenceWarning, setSilenceWarning] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // Track whether this window initiated the action, to avoid double-processing events
   const localActionRef = useRef(false);
@@ -60,6 +62,7 @@ export function useRecording(options?: UseRecordingOptions): UseRecordingReturn 
     }
 
     setError(null);
+    setSilenceWarning(false);
     localActionRef.current = true;
     try {
       const result = await invoke<StartRecordingResult>("start_recording", {
@@ -210,6 +213,20 @@ export function useRecording(options?: UseRecordingOptions): UseRecordingReturn 
     };
   }, [syncStatusFromBackend]);
 
+  // Check for silent mic audio ~4s after recording starts
+  useEffect(() => {
+    if (status !== "recording" || !isTauri()) return;
+    const timer = setTimeout(async () => {
+      try {
+        const silent = await invoke<boolean>("check_silence_warning");
+        if (silent) setSilenceWarning(true);
+      } catch {
+        // Best effort only.
+      }
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [status]);
+
   useEffect(() => {
     return () => clearTimer();
   }, [clearTimer]);
@@ -219,6 +236,7 @@ export function useRecording(options?: UseRecordingOptions): UseRecordingReturn 
     meetingId,
     elapsedSeconds,
     error,
+    silenceWarning,
     startRecording,
     stopRecording,
     pauseRecording,

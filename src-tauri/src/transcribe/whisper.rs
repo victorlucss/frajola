@@ -71,7 +71,7 @@ pub fn transcribe(
             .map_err(|e| AppError::General(format!("Failed to get segment text: {e}")))?;
 
         // Strip the [SPEAKER_TURN] token that tinydiarize may inject
-        let cleaned = text.replace("[SPEAKER_TURN]", "");
+        let cleaned = text.replace("[SPEAKER_TURN]", "").replace("[BLANK_AUDIO]", "");
         let trimmed = cleaned.trim().to_string();
         if trimmed.is_empty() {
             continue;
@@ -155,5 +155,120 @@ fn speaker_from_energy(frames: &[EnergyFrame], start_ms: i64, end_ms: i64) -> St
         "Other".into()
     } else {
         "You".into()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // --- Token filtering tests ---
+
+    /// Simulates the segment text cleaning logic from transcribe().
+    fn clean_segment_text(text: &str) -> Option<String> {
+        let cleaned = text.replace("[SPEAKER_TURN]", "").replace("[BLANK_AUDIO]", "");
+        let trimmed = cleaned.trim().to_string();
+        if trimmed.is_empty() { None } else { Some(trimmed) }
+    }
+
+    #[test]
+    fn blank_audio_token_is_filtered() {
+        assert_eq!(clean_segment_text("[BLANK_AUDIO]"), None);
+    }
+
+    #[test]
+    fn speaker_turn_token_is_filtered() {
+        assert_eq!(clean_segment_text("[SPEAKER_TURN]"), None);
+    }
+
+    #[test]
+    fn combined_tokens_are_filtered() {
+        assert_eq!(clean_segment_text("[SPEAKER_TURN] [BLANK_AUDIO]"), None);
+    }
+
+    #[test]
+    fn real_text_with_tokens_preserves_text() {
+        assert_eq!(
+            clean_segment_text("[SPEAKER_TURN] Hello world"),
+            Some("Hello world".into())
+        );
+    }
+
+    #[test]
+    fn real_text_preserved() {
+        assert_eq!(
+            clean_segment_text(" Hello, how are you? "),
+            Some("Hello, how are you?".into())
+        );
+    }
+
+    #[test]
+    fn whitespace_only_is_filtered() {
+        assert_eq!(clean_segment_text("   "), None);
+    }
+
+    // --- Speaker energy tests ---
+
+    fn make_energy_frames(pairs: &[(f32, f32)]) -> Vec<EnergyFrame> {
+        pairs.iter().enumerate().map(|(i, &(mic, sys))| EnergyFrame {
+            time_ms: (i * 100) as i64,
+            mic_rms: mic,
+            sys_rms: sys,
+        }).collect()
+    }
+
+    #[test]
+    fn speaker_from_energy_returns_you_when_system_silent() {
+        let frames = make_energy_frames(&[
+            (0.5, 0.0), (0.6, 0.0), (0.4, 0.0),
+        ]);
+        assert_eq!(speaker_from_energy(&frames, 0, 300), "You");
+    }
+
+    #[test]
+    fn speaker_from_energy_returns_other_when_mic_silent() {
+        let frames = make_energy_frames(&[
+            (0.0, 0.5), (0.0, 0.6), (0.0, 0.4),
+        ]);
+        assert_eq!(speaker_from_energy(&frames, 0, 300), "Other");
+    }
+
+    #[test]
+    fn speaker_from_energy_returns_you_when_mic_dominant() {
+        // Baseline: mic=0.3, sys=0.3. Segment: mic spikes more than sys.
+        let frames = make_energy_frames(&[
+            (0.3, 0.3), (0.3, 0.3), (0.3, 0.3), // baseline
+            (0.3, 0.3), (0.3, 0.3),
+            (0.8, 0.35), (0.9, 0.3), (0.7, 0.32), // mic spike
+        ]);
+        // Query the spike region (500-800ms)
+        assert_eq!(speaker_from_energy(&frames, 500, 800), "You");
+    }
+
+    #[test]
+    fn speaker_from_energy_returns_other_when_system_dominant() {
+        // Baseline: mic=0.3, sys=0.3. Segment: sys spikes more than mic.
+        let frames = make_energy_frames(&[
+            (0.3, 0.3), (0.3, 0.3), (0.3, 0.3), // baseline
+            (0.3, 0.3), (0.3, 0.3),
+            (0.35, 0.8), (0.3, 0.9), (0.32, 0.7), // sys spike
+        ]);
+        assert_eq!(speaker_from_energy(&frames, 500, 800), "Other");
+    }
+
+    #[test]
+    fn speaker_from_energy_returns_you_when_no_frames_in_range() {
+        let frames = make_energy_frames(&[(0.5, 0.5)]);
+        // Query range outside available frames
+        assert_eq!(speaker_from_energy(&frames, 5000, 6000), "You");
+    }
+
+    #[test]
+    fn speaker_from_energy_both_silent_returns_you() {
+        let frames = make_energy_frames(&[
+            (0.0, 0.0), (0.0, 0.0), (0.0, 0.0),
+        ]);
+        // Both channels silent → global_sys_avg < 1e-4 → "You"
+        assert_eq!(speaker_from_energy(&frames, 0, 300), "You");
     }
 }
