@@ -1,4 +1,4 @@
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::{Arc, Mutex};
 
 use cpal::Stream;
@@ -39,6 +39,8 @@ impl SttEngine {
 pub struct ActiveDictation {
     pub stop_flag: Arc<AtomicBool>,
     pub mic_stream: Option<Stream>,
+    pub level_stream: Option<Stream>,
+    pub level_value: Arc<AtomicU32>,
     pub audio_path: Option<std::path::PathBuf>,
     pub engine: SttEngine,
 }
@@ -103,6 +105,8 @@ mod tests {
             *lock = Some(ActiveDictation {
                 stop_flag: Arc::new(AtomicBool::new(false)),
                 mic_stream: None,
+                level_stream: None,
+                level_value: Arc::new(AtomicU32::new(0)),
                 audio_path: None,
                 engine: SttEngine::Whisper,
             });

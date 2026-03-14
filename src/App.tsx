@@ -5,6 +5,8 @@ import { useMeetingDetail } from "./hooks/useMeetingDetail";
 import { useRecording } from "./hooks/useRecording";
 import { useTheme } from "./hooks/useTheme";
 
+import type { View } from "./types";
+import type { Category } from "./components/settings/types";
 import AppShell from "./components/layout/AppShell";
 import IconRail from "./components/layout/IconRail";
 import Sidebar from "./components/layout/Sidebar";
@@ -12,12 +14,13 @@ import MainPanel from "./components/layout/MainPanel";
 import MeetingDetail from "./components/meetings/MeetingDetail";
 import MeetingEmpty from "./components/meetings/MeetingEmpty";
 import RecordingIndicator from "./components/recording/RecordingIndicator";
-import SettingsPage from "./components/settings/SettingsPage";
+import SettingsContent from "./components/settings/SettingsContent";
 import OnboardingFlow from "./components/onboarding/OnboardingFlow";
 
 function App() {
   useTheme();
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [view, setView] = useState<View>("home");
+  const [settingsCategory, setSettingsCategory] = useState<Category>("general");
   const [selectedMeetingId, setSelectedMeetingId] = useState<number | null>(null);
   const [onboardingReady, setOnboardingReady] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -28,7 +31,7 @@ function App() {
     onComplete: async (meeting) => {
       await refresh();
       setSelectedMeetingId(meeting.id);
-      setSettingsOpen(false);
+      setView("home");
       // Trigger transcription in the background
       if (isTauri()) {
         invoke("transcribe_meeting", { meetingId: meeting.id }).catch((err) => {
@@ -42,6 +45,7 @@ function App() {
 
   function handleNewRecording() {
     if (recording.status === "idle") {
+      setView("home");
       recording.startRecording();
     } else if (recording.status === "recording" || recording.status === "paused") {
       recording.stopRecording();
@@ -50,7 +54,21 @@ function App() {
 
   const isRecordingActive = recording.status !== "idle";
 
-  const toggleSettings = useCallback(() => setSettingsOpen((o) => !o), []);
+  const toggleSettings = useCallback(() => setView((v) => (v === "settings" ? "home" : "settings")), []);
+
+  // Escape key to leave settings
+  useEffect(() => {
+    if (view !== "settings") return;
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      const tag = (document.activeElement?.tagName ?? "").toLowerCase();
+      if (tag === "input" || tag === "textarea" || tag === "select") return;
+      setView("home");
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [view]);
 
   useEffect(() => {
     if (!isTauri()) {
@@ -89,57 +107,70 @@ function App() {
     );
   }
 
+  const settingsOpen = view === "settings";
+
   return (
     <>
       <AppShell
         iconRail={
-          <IconRail
-            onSettingsToggle={toggleSettings}
-            settingsOpen={settingsOpen}
-            onNewRecording={handleNewRecording}
-            isRecording={isRecordingActive}
-          />
+          settingsOpen ? undefined : (
+            <IconRail
+              onSettingsToggle={toggleSettings}
+              settingsOpen={settingsOpen}
+              onNewRecording={handleNewRecording}
+              isRecording={isRecordingActive}
+            />
+          )
         }
         sidebar={
-          <Sidebar
-            meetings={meetings}
-            selectedId={selectedMeetingId}
-            onSelect={setSelectedMeetingId}
-            recordingIndicator={
-              isRecordingActive ? (
-                <RecordingIndicator
-                  status={recording.status}
-                  elapsedSeconds={recording.elapsedSeconds}
-                  onPause={recording.pauseRecording}
-                  onResume={recording.resumeRecording}
-                  onStop={recording.stopRecording}
-                />
-              ) : undefined
-            }
-          />
+          settingsOpen ? undefined : (
+            <Sidebar
+              meetings={meetings}
+              selectedId={selectedMeetingId}
+              onSelect={setSelectedMeetingId}
+              recordingIndicator={
+                isRecordingActive ? (
+                  <RecordingIndicator
+                    status={recording.status}
+                    elapsedSeconds={recording.elapsedSeconds}
+                    onPause={recording.pauseRecording}
+                    onResume={recording.resumeRecording}
+                    onStop={recording.stopRecording}
+                  />
+                ) : undefined
+              }
+            />
+          )
         }
         main={
-          <MainPanel>
-            {meetingDetail ? (
-              <MeetingDetail detail={meetingDetail} onRefresh={refreshDetail} />
-            ) : (
-              <MeetingEmpty />
-            )}
-            {recording.error && (
-              <div className="fixed bottom-4 right-4 max-w-sm rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-                <p>{recording.error}</p>
-                <button
-                  onClick={() => invoke("open_audio_permission_settings")}
-                  className="mt-2 rounded bg-red-500/20 px-3 py-1 text-xs font-medium text-red-200 hover:bg-red-500/30 transition-colors"
-                >
-                  Open System Settings
-                </button>
-              </div>
-            )}
-          </MainPanel>
+          settingsOpen ? (
+            <SettingsContent
+              category={settingsCategory}
+              onCategoryChange={setSettingsCategory}
+              onBack={() => setView("home")}
+            />
+          ) : (
+            <MainPanel>
+              {meetingDetail ? (
+                <MeetingDetail detail={meetingDetail} onRefresh={refreshDetail} />
+              ) : (
+                <MeetingEmpty />
+              )}
+              {recording.error && (
+                <div className="fixed bottom-4 right-4 max-w-sm rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                  <p>{recording.error}</p>
+                  <button
+                    onClick={() => invoke("open_audio_permission_settings")}
+                    className="mt-2 rounded bg-red-500/20 px-3 py-1 text-xs font-medium text-red-200 hover:bg-red-500/30 transition-colors"
+                  >
+                    Open System Settings
+                  </button>
+                </div>
+              )}
+            </MainPanel>
+          )
         }
       />
-      {settingsOpen && <SettingsPage onClose={() => setSettingsOpen(false)} />}
       {showOnboarding && (
         <OnboardingFlow
           onComplete={() => {

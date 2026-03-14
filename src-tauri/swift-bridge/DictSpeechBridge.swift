@@ -132,6 +132,11 @@ class SpeechBridge {
         let inputNode = audioEngine.inputNode
         let recordingFormat = inputNode.outputFormat(forBus: 0)
 
+        // Capture callback references BEFORE installing tap to avoid
+        // thread-visibility issues reading self properties from audio thread
+        let capturedLevelCb = self.levelCallback
+        let capturedCtx = self.callbackContext
+
         inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) {
             [weak self] buffer, _ in
             guard let self = self else { return }
@@ -149,13 +154,9 @@ class SpeechBridge {
             let rms = sqrt(sum / max(Float(frames), 1.0))
             let normalized = min(1.0, sqrt(min(1.0, rms * 20.0)))
 
-            // Marshal level callback to main thread for FFI safety
-            let level = normalized
-            let ctx = self.callbackContext
-            let cb = self.levelCallback
-            DispatchQueue.main.async {
-                cb?(ctx, level)
-            }
+            // Call level callback directly from audio thread
+            // (Rust emit() is thread-safe, no need to dispatch to main)
+            capturedLevelCb?(capturedCtx, normalized)
         }
 
         do {
@@ -299,20 +300,34 @@ public func dict_speech_cancel() {
 public func dict_speech_request_permissions(
     callback: @convention(c) (Bool, Bool) -> Void
 ) {
-    var speechGranted = false
-    var micGranted = false
-    let group = DispatchGroup()
+    let speechStatus = SFSpeechRecognizer.authorizationStatus()
+    let micStatus = AVCaptureDevice.authorizationStatus(for: .audio)
 
-    group.enter()
-    SFSpeechRecognizer.requestAuthorization { status in
-        speechGranted = (status == .authorized)
-        group.leave()
+    // If both already granted, skip the prompt
+    if speechStatus == .authorized && micStatus == .authorized {
+        NSLog("[DictSpeech] Permission results — speech: 1, mic: 1 (already granted)")
+        callback(true, true)
+        return
     }
 
-    group.enter()
-    AVCaptureDevice.requestAccess(for: .audio) { granted in
-        micGranted = granted
-        group.leave()
+    var speechGranted = speechStatus == .authorized
+    var micGranted = micStatus == .authorized
+    let group = DispatchGroup()
+
+    if speechStatus != .authorized {
+        group.enter()
+        SFSpeechRecognizer.requestAuthorization { status in
+            speechGranted = (status == .authorized)
+            group.leave()
+        }
+    }
+
+    if micStatus != .authorized {
+        group.enter()
+        AVCaptureDevice.requestAccess(for: .audio) { granted in
+            micGranted = granted
+            group.leave()
+        }
     }
 
     group.notify(queue: .global()) {

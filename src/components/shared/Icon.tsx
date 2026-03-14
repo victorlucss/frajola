@@ -20,7 +20,8 @@ export type IconName =
   | "play"
   | "pause"
   | "refresh"
-  | "cat";
+  | "cat"
+  | "arrow-left";
 
 const paths: Record<IconName, string> = {
   home: "M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z M9 21V12h6v9",
@@ -46,6 +47,7 @@ const paths: Record<IconName, string> = {
   refresh:
     "M21 2v6h-6 M3 12a9 9 0 0 1 15-6.7L21 8 M3 22v-6h6 M21 12a9 9 0 0 1-15 6.7L3 16",
   cat: "M12 5C8 1 2 1 2 5c0 3 2 5 4 7-1 2-2 4-2 6 0 3 3 4 5 4 1 0 2-.5 3-1.5C13 21.5 14 22 15 22c2 0 5-1 5-4 0-2-1-4-2-6 2-2 4-4 4-7 0-4-6-4-10 0z M8 9v.01 M16 9v.01",
+  "arrow-left": "M19 12H5 M12 19l-7-7 7-7",
 };
 
 export default function Icon({ name, size = 18, className = "" }: IconProps) {

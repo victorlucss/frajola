@@ -2,6 +2,8 @@ import type { Meeting } from "../../types";
 import { groupByDate } from "../../lib/date";
 import MeetingListItem from "../meetings/MeetingListItem";
 
+const isMac = navigator.userAgent.includes("Mac");
+
 interface Props {
   meetings: Meeting[];
   selectedId: number | null;
@@ -14,10 +16,8 @@ export default function Sidebar({ meetings, selectedId, onSelect, recordingIndic
 
   return (
     <div className="flex h-full flex-col border-r border-border bg-bg">
-      {/* Header */}
-      <div className="flex shrink-0 items-center justify-between px-4 py-4">
-        <h2 className="text-sm font-semibold text-text-primary">Meetings</h2>
-      </div>
+      {/* Spacer for macOS title bar */}
+      {isMac && <div className="shrink-0 h-8" />}
 
       {/* Recording indicator */}
       {recordingIndicator && (

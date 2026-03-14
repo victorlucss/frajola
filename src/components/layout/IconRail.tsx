@@ -2,6 +2,8 @@ import frajolaLogo from "../../../assets/frajola.png";
 import Icon from "../shared/Icon";
 import type { IconName } from "../shared/Icon";
 
+const isMac = navigator.userAgent.includes("Mac");
+
 interface Props {
   onNewRecording: () => void;
   onSettingsToggle: () => void;
@@ -16,7 +18,7 @@ const navItems: { icon: IconName; label: string }[] = [
 
 export default function IconRail({ onNewRecording, onSettingsToggle, settingsOpen, isRecording }: Props) {
   return (
-    <div className="flex h-full w-12 flex-col items-center border-r border-border bg-surface py-2">
+    <div className={`flex h-full w-12 flex-col items-center bg-bg pb-2 ${isMac ? "pt-8" : "pt-2"}`}>
       {/* Logo */}
       <div className="mb-3 flex h-8 w-8 items-center justify-center">
         <img

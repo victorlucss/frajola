@@ -49,4 +49,4 @@ export interface Setting {
 
 export type Tab = "summary" | "actions" | "transcript";
 
-export type View = "home";
+export type View = "home" | "settings";

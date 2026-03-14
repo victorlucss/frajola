@@ -73,32 +73,10 @@ pub fn run() {
             let handle = app.handle().clone();
             tauri::async_runtime::spawn(system::meeting_detector::start_detection_loop(handle));
 
-            // Keep overlay visibility synced with minimize state.
-            // This is more reliable on macOS than focus-only heuristics.
-            let overlay_handle = app.handle().clone();
-            tauri::async_runtime::spawn(async move {
-                loop {
-                    tokio::time::sleep(std::time::Duration::from_millis(300)).await;
-
-                    let Some(main_win) = overlay_handle.get_webview_window("main") else {
-                        continue;
-                    };
-                    let Some(overlay_win) = overlay_handle.get_webview_window("overlay") else {
-                        continue;
-                    };
-
-                    let is_minimized = main_win.is_minimized().unwrap_or(false);
-                    let is_main_visible = main_win.is_visible().unwrap_or(true);
-                    let is_overlay_visible = overlay_win.is_visible().unwrap_or(false);
-                    let should_show_overlay = is_minimized || !is_main_visible;
-
-                    if should_show_overlay && !is_overlay_visible {
-                        let _ = overlay_win.show();
-                    } else if !should_show_overlay && is_overlay_visible {
-                        let _ = overlay_win.hide();
-                    }
-                }
-            });
+            // Show the overlay on startup — it stays visible at all times
+            if let Some(overlay_win) = app.get_webview_window("overlay") {
+                let _ = overlay_win.show();
+            }
 
             Ok(())
         })
@@ -118,28 +96,7 @@ pub fn run() {
                     tauri::WindowEvent::Destroyed => {
                         window.app_handle().exit(0);
                     }
-                    // Show overlay when main window is minimized, hide when focused
-                    tauri::WindowEvent::Focused(focused) => {
-                        let app = window.app_handle().clone();
-                        if *focused {
-                            // Main window active — hide overlay
-                            if let Some(overlay) = app.get_webview_window("overlay") {
-                                let _ = overlay.hide();
-                            }
-                        } else {
-                            // Main lost focus — check if minimized after a short delay
-                            tauri::async_runtime::spawn(async move {
-                                tokio::time::sleep(std::time::Duration::from_millis(300)).await;
-                                if let Some(main_win) = app.get_webview_window("main") {
-                                    if main_win.is_minimized().unwrap_or(false) {
-                                        if let Some(overlay) = app.get_webview_window("overlay") {
-                                            let _ = overlay.show();
-                                        }
-                                    }
-                                }
-                            });
-                        }
-                    }
+                    tauri::WindowEvent::Focused(_) => {}
                     _ => {}
                 }
             }
@@ -177,8 +134,11 @@ pub fn run() {
             commands::overlay::collapse_overlay,
             commands::overlay::set_overlay_pill_width,
             commands::overlay::compact_overlay,
+            commands::overlay::show_dictation_overlay,
+            commands::overlay::hide_dictation_overlay,
             // Dictation commands
             commands::dictation::get_dictation_status,
+            commands::dictation::get_dictation_level,
             commands::dictation::check_accessibility,
             commands::dictation::open_accessibility_settings,
             commands::dictation::get_frontmost_app_name,
@@ -261,28 +221,57 @@ fn register_dictation_hotkey(app: &tauri::AppHandle) -> Result<(), Box<dyn std::
     };
 
     app.global_shortcut().on_shortcut(hotkey, move |app, _shortcut, event| {
-        // Only handle key press (not release) for toggle mode
-        if event.state != ShortcutState::Pressed {
-            return;
-        }
-
         let app_handle = app.clone();
-        tauri::async_runtime::spawn(async move {
-            let dictation_state = app_handle.state::<DictationState>();
 
-            if dictation_state.is_active() {
-                // Stop dictation
-                let db = app_handle.state::<Database>();
-                let _ = commands::dictation::stop_dictation(db, dictation_state, app_handle.clone()).await;
-            } else {
-                // Start dictation
-                let db = app_handle.state::<Database>();
-                let recording = app_handle.state::<audio::state::RecordingState>();
-                if let Err(e) = commands::dictation::start_dictation(db, dictation_state, recording, app_handle.clone()).await {
-                    log::error!("Failed to start dictation: {}", e);
+        // Read hotkey mode from settings (default: push_to_talk)
+        let mode = app_handle
+            .try_state::<Database>()
+            .and_then(|db| db.get_setting("dictation_hotkey_mode").ok().flatten())
+            .unwrap_or_default();
+
+        let is_push_to_talk = mode != "toggle";
+
+        match event.state {
+            ShortcutState::Pressed => {
+                tauri::async_runtime::spawn(async move {
+                    let dictation_state = app_handle.state::<DictationState>();
+
+                    if is_push_to_talk {
+                        // Push-to-talk: always start on press
+                        if !dictation_state.is_active() {
+                            let db = app_handle.state::<Database>();
+                            let recording = app_handle.state::<audio::state::RecordingState>();
+                            if let Err(e) = commands::dictation::start_dictation(db, dictation_state, recording, app_handle.clone()).await {
+                                log::error!("Failed to start dictation: {}", e);
+                            }
+                        }
+                    } else {
+                        // Toggle: start/stop on press
+                        if dictation_state.is_active() {
+                            let db = app_handle.state::<Database>();
+                            let _ = commands::dictation::stop_dictation(db, dictation_state, app_handle.clone()).await;
+                        } else {
+                            let db = app_handle.state::<Database>();
+                            let recording = app_handle.state::<audio::state::RecordingState>();
+                            if let Err(e) = commands::dictation::start_dictation(db, dictation_state, recording, app_handle.clone()).await {
+                                log::error!("Failed to start dictation: {}", e);
+                            }
+                        }
+                    }
+                });
+            }
+            ShortcutState::Released => {
+                if is_push_to_talk {
+                    tauri::async_runtime::spawn(async move {
+                        let dictation_state = app_handle.state::<DictationState>();
+                        if dictation_state.is_active() {
+                            let db = app_handle.state::<Database>();
+                            let _ = commands::dictation::stop_dictation(db, dictation_state, app_handle.clone()).await;
+                        }
+                    });
                 }
             }
-        });
+        }
     })?;
 
     log::info!("Dictation hotkey registered: {}", hotkey);

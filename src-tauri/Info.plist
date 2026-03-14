@@ -7,5 +7,7 @@
   <string>Frajola needs microphone access to record meetings.</string>
   <key>NSScreenCaptureUsageDescription</key>
   <string>Frajola needs system audio access to capture meeting participants' audio.</string>
+  <key>NSSpeechRecognitionUsageDescription</key>
+  <string>Frajola uses speech recognition for real-time dictation.</string>
 </dict>
 </plist>

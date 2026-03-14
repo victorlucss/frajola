@@ -37,6 +37,19 @@ pub fn get_dictation_status(
     })
 }
 
+/// Fast polling command for audio level — reads an atomic, no locks.
+#[tauri::command]
+pub fn get_dictation_level(
+    dictation: State<'_, DictationState>,
+) -> f32 {
+    if let Ok(lock) = dictation.active.lock() {
+        if let Some(active) = lock.as_ref() {
+            return f32::from_bits(active.level_value.load(std::sync::atomic::Ordering::Relaxed));
+        }
+    }
+    0.0
+}
+
 // ─── Accessibility ───────────────────────────────────────
 
 #[tauri::command]
@@ -173,7 +186,7 @@ pub fn get_dictation_config(db: State<'_, Database>) -> Result<DictationConfig, 
 
     Ok(DictationConfig {
         enabled: get("dictation_enabled", "1") == "1",
-        hotkey_mode: get("dictation_hotkey_mode", "toggle"),
+        hotkey_mode: get("dictation_hotkey_mode", "push_to_talk"),
         stt_engine: get("dictation_stt_engine", "whisper"),
         language: get("dictation_language", "en"),
         llm_enabled: get("dictation_llm_enabled", "0") == "1",
@@ -293,20 +306,39 @@ fn start_apple_speech_dictation(
     let app_handle2 = app.clone();
     let app_handle3 = app.clone();
 
+    // Track last partial text length to derive speaking activity
+    let last_partial_len = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let last_partial_len2 = last_partial_len.clone();
+
     let callbacks = apple_speech::SpeechCallbacks {
         on_result: Box::new(move |text: &str, is_final: bool| {
             if is_final {
                 let text = text.to_string();
                 let handle = app_handle.clone();
+                // Reset level when done
+                let _ = app_handle.emit("dictation-audio-level", 0.0_f32);
                 tauri::async_runtime::spawn(async move {
                     handle_dictation_result(&handle, &text).await;
                 });
             } else {
                 let _ = app_handle.emit("dictation-partial-result", text);
+                // Derive level from text changes — if text is growing, user is speaking
+                let new_len = text.len();
+                let old_len = last_partial_len.swap(new_len, std::sync::atomic::Ordering::Relaxed);
+                let level: f32 = if new_len > old_len {
+                    // Speaking — emit a random-ish level based on text growth
+                    let growth = (new_len - old_len) as f32;
+                    (0.4 + (growth / 10.0).min(0.6)).min(1.0)
+                } else {
+                    0.15
+                };
+                let _ = app_handle.emit("dictation-audio-level", level);
             }
         }),
         on_level: Box::new(move |level: f32| {
+            // Swift level callback (may not fire on all macOS versions)
             let _ = app_handle2.emit("dictation-audio-level", level);
+            last_partial_len2.store(0, std::sync::atomic::Ordering::Relaxed);
         }),
         on_error: Box::new(move |error: &str| {
             log::error!("Apple Speech error: {}", error);
@@ -316,13 +348,23 @@ fn start_apple_speech_dictation(
 
     apple_speech::start(language, callbacks);
 
+    // Start mic level monitor (separate cpal stream for audio visualization)
+    let stop_flag = Arc::new(AtomicBool::new(false));
+    let (level_stream, level_value) = crate::dictation::mic_level::start_level_monitor(
+        stop_flag.clone(),
+    )
+    .map(|(s, v)| (Some(s), v))
+    .unwrap_or_else(|_| (None, std::sync::Arc::new(std::sync::atomic::AtomicU32::new(0))));
+
     let mut lock = dictation
         .active
         .lock()
         .map_err(|_| AppError::General("Dictation state lock poisoned".into()))?;
     *lock = Some(ActiveDictation {
-        stop_flag: Arc::new(AtomicBool::new(false)),
+        stop_flag,
         mic_stream: None,
+        level_stream,
+        level_value,
         audio_path: None,
         engine: SttEngine::Apple,
     });
@@ -364,9 +406,18 @@ fn start_whisper_dictation(
         .active
         .lock()
         .map_err(|_| AppError::General("Dictation state lock poisoned".into()))?;
+    // Start mic level monitor for whisper mode too
+    let (level_stream, level_value) = crate::dictation::mic_level::start_level_monitor(
+        stop_flag.clone(),
+    )
+    .map(|(s, v)| (Some(s), v))
+    .unwrap_or_else(|_| (None, std::sync::Arc::new(std::sync::atomic::AtomicU32::new(0))));
+
     *lock = Some(ActiveDictation {
         stop_flag,
         mic_stream: handles.mic_stream,
+        level_stream,
+        level_value,
         audio_path: Some(audio_path),
         engine: SttEngine::Whisper,
     });
@@ -488,6 +539,8 @@ async fn handle_dictation_result(app: &tauri::AppHandle, raw_text: &str) {
     if raw_text.trim().is_empty() {
         return;
     }
+
+    let _ = app.emit("dictation-processing", ());
 
     let db = app.state::<Database>();
 
