@@ -4,10 +4,8 @@
 <plist version="1.0">
 <dict>
   <key>NSMicrophoneUsageDescription</key>
-  <string>Frajola needs microphone access to record meetings.</string>
+  <string>Frajola needs microphone access to record meetings and for dictation.</string>
   <key>NSScreenCaptureUsageDescription</key>
   <string>Frajola needs system audio access to capture meeting participants' audio.</string>
-  <key>NSSpeechRecognitionUsageDescription</key>
-  <string>Frajola uses speech recognition for real-time dictation.</string>
 </dict>
 </plist>

@@ -7,7 +7,7 @@ use crate::dictation::frontmost_app;
 use crate::dictation::processor::{
     DictationLlmConfig, DictationSnippet, DictationVoiceCommand, ProcessResult,
 };
-use crate::dictation::state::{DictationState, SttEngine};
+use crate::dictation::state::DictationState;
 use crate::dictation::text_injector;
 use crate::error::AppError;
 
@@ -16,7 +16,6 @@ use crate::error::AppError;
 #[derive(Debug, Serialize)]
 pub struct DictationStatus {
     pub is_active: bool,
-    pub engine: Option<String>,
 }
 
 #[tauri::command]
@@ -30,10 +29,6 @@ pub fn get_dictation_status(
 
     Ok(DictationStatus {
         is_active: lock.is_some(),
-        engine: lock.as_ref().map(|a| match a.engine {
-            SttEngine::Apple => "apple".to_string(),
-            SttEngine::Whisper => "whisper".to_string(),
-        }),
     })
 }
 
@@ -164,7 +159,6 @@ pub fn clear_dictation_history(db: State<'_, Database>) -> Result<(), AppError> 
 pub struct DictationConfig {
     pub enabled: bool,
     pub hotkey_mode: String,
-    pub stt_engine: String,
     pub language: String,
     pub llm_enabled: bool,
     pub llm_correction_level: i32,
@@ -187,7 +181,6 @@ pub fn get_dictation_config(db: State<'_, Database>) -> Result<DictationConfig, 
     Ok(DictationConfig {
         enabled: get("dictation_enabled", "1") == "1",
         hotkey_mode: get("dictation_hotkey_mode", "push_to_talk"),
-        stt_engine: get("dictation_stt_engine", "whisper"),
         language: get("dictation_language", "en"),
         llm_enabled: get("dictation_llm_enabled", "0") == "1",
         llm_correction_level: get("dictation_llm_correction_level", "3")
@@ -209,7 +202,6 @@ pub fn save_dictation_config(
 ) -> Result<(), AppError> {
     db.set_setting("dictation_enabled", if config.enabled { "1" } else { "0" })?;
     db.set_setting("dictation_hotkey_mode", &config.hotkey_mode)?;
-    db.set_setting("dictation_stt_engine", &config.stt_engine)?;
     db.set_setting("dictation_language", &config.language)?;
     db.set_setting(
         "dictation_llm_enabled",
@@ -261,133 +253,13 @@ pub async fn start_dictation(
         }
     }
 
-    let engine_str = db
-        .get_setting("dictation_stt_engine")?
-        .unwrap_or_else(|| "whisper".to_string());
-    let engine = SttEngine::from_str(&engine_str);
     let language = db
         .get_setting("dictation_language")?
         .unwrap_or_else(|| "en".to_string());
 
-    match engine {
-        SttEngine::Apple => {
-            #[cfg(target_os = "macos")]
-            {
-                start_apple_speech_dictation(&dictation, &app, &language)?;
-            }
-            #[cfg(not(target_os = "macos"))]
-            {
-                return Err(AppError::General(
-                    "Apple Speech is only available on macOS".into(),
-                ));
-            }
-        }
-        SttEngine::Whisper => {
-            start_whisper_dictation(&dictation, &app, &language)?;
-        }
-    }
+    start_whisper_dictation(&dictation, &app, &language)?;
 
     let _ = app.emit("dictation-started", ());
-    Ok(())
-}
-
-#[cfg(target_os = "macos")]
-fn start_apple_speech_dictation(
-    dictation: &State<'_, DictationState>,
-    app: &tauri::AppHandle,
-    language: &str,
-) -> Result<(), AppError> {
-    use crate::dictation::apple_speech;
-    use crate::dictation::state::ActiveDictation;
-    use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
-    use std::sync::Arc;
-
-    // Populate the ActiveDictation slot BEFORE the Swift bridge starts firing
-    // callbacks. Otherwise a very fast press→release sequence on push-to-talk
-    // can see is_active()==false between the `apple_speech::start` call and the
-    // lock write, and the stop path returns "Not dictating".
-    {
-        let mut lock = dictation
-            .active
-            .lock()
-            .map_err(|_| AppError::General("Dictation state lock poisoned".into()))?;
-        if lock.is_some() {
-            return Err(AppError::General("Already dictating".into()));
-        }
-        let level_value = Arc::new(AtomicU32::new(0));
-        *lock = Some(ActiveDictation {
-            stop_flag: Arc::new(AtomicBool::new(false)),
-            mic_stream: None,
-            level_stream: None,
-            level_value,
-            audio_path: None,
-            engine: SttEngine::Apple,
-        });
-    }
-
-    // Grab a handle to the level atomic we just stored, so the Swift level
-    // callback can write to it directly (no duplicate cpal stream needed).
-    let level_writer = {
-        let lock = dictation
-            .active
-            .lock()
-            .map_err(|_| AppError::General("Dictation state lock poisoned".into()))?;
-        lock.as_ref()
-            .map(|a| a.level_value.clone())
-            .ok_or_else(|| AppError::General("Failed to install Apple Speech".into()))?
-    };
-
-    let app_handle = app.clone();
-    let app_handle2 = app.clone();
-    let app_handle3 = app.clone();
-
-    // Track last partial text length to derive speaking activity when the Swift
-    // level callback doesn't fire (some macOS versions).
-    let last_partial_len = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
-    let last_partial_len2 = last_partial_len.clone();
-    let level_writer2 = level_writer.clone();
-
-    let callbacks = apple_speech::SpeechCallbacks {
-        on_result: Box::new(move |text: &str, is_final: bool| {
-            if is_final {
-                let text = text.to_string();
-                let handle = app_handle.clone();
-                let _ = app_handle.emit("dictation-audio-level", 0.0_f32);
-                tauri::async_runtime::spawn(async move {
-                    handle_dictation_result(&handle, &text).await;
-                });
-            } else {
-                let _ = app_handle.emit("dictation-partial-result", text);
-                let new_len = text.len();
-                let old_len = last_partial_len.swap(new_len, Ordering::Relaxed);
-                let level: f32 = if new_len > old_len {
-                    let growth = (new_len - old_len) as f32;
-                    (0.4 + (growth / 10.0).min(0.6)).min(1.0)
-                } else {
-                    0.15
-                };
-                // Only write the derived level if the Swift level callback hasn't
-                // been writing recently (its value would be non-zero).
-                let current = f32::from_bits(level_writer.load(Ordering::Relaxed));
-                if current < 1e-6 {
-                    level_writer.store(level.to_bits(), Ordering::Relaxed);
-                }
-                let _ = app_handle.emit("dictation-audio-level", level);
-            }
-        }),
-        on_level: Box::new(move |level: f32| {
-            level_writer2.store(level.to_bits(), Ordering::Relaxed);
-            let _ = app_handle2.emit("dictation-audio-level", level);
-            last_partial_len2.store(0, Ordering::Relaxed);
-        }),
-        on_error: Box::new(move |error: &str| {
-            log::error!("Apple Speech error: {}", error);
-            let _ = app_handle3.emit("dictation-error", error);
-        }),
-    };
-
-    apple_speech::start(language, callbacks);
-
     Ok(())
 }
 
@@ -449,7 +321,6 @@ fn start_whisper_dictation(
         level_stream: None,
         level_value,
         audio_path: Some(audio_path),
-        engine: SttEngine::Whisper,
     });
 
     Ok(())
@@ -470,98 +341,85 @@ pub async fn stop_dictation(
             .ok_or_else(|| AppError::General("Not dictating".into()))?
     };
 
-    match active.engine {
-        SttEngine::Apple => {
-            #[cfg(target_os = "macos")]
-            {
-                crate::dictation::apple_speech::stop();
-                // Apple Speech delivers the final result asynchronously via the
-                // on_result callback; we don't wait here.
-            }
+    // Signal the capture stream + writer thread to stop, then drop the
+    // stream so cpal releases the device.
+    active
+        .stop_flag
+        .store(true, std::sync::atomic::Ordering::Relaxed);
+    drop(active.mic_stream);
+    drop(active.level_stream);
+
+    // Small grace period for the writer thread to drain & finalize WAV.
+    // (The capture layer's writer thread owns the file and closes it when
+    // the sender side is dropped; the drop above releases the tx clone.)
+    tokio::time::sleep(std::time::Duration::from_millis(250)).await;
+
+    let Some(audio_path) = active.audio_path.clone() else {
+        let _ = app.emit("dictation-stopped", ());
+        return Ok(());
+    };
+
+    if !audio_path.exists() {
+        let _ = app.emit("dictation-stopped", ());
+        return Ok(());
+    }
+
+    let _ = app.emit("dictation-processing", ());
+
+    let whisper_model = db
+        .get_setting("whisper_model")?
+        .unwrap_or_else(|| "base".to_string());
+    let language = db
+        .get_setting("dictation_language")?
+        .unwrap_or_else(|| "en".to_string());
+
+    let Some(model_path) = crate::transcribe::model::model_path(&app, &whisper_model) else {
+        let _ = app.emit("dictation-error", "No whisper model configured.");
+        let _ = std::fs::remove_file(&audio_path);
+        let _ = app.emit("dictation-stopped", ());
+        return Ok(());
+    };
+
+    if !model_path.exists() {
+        let _ = app.emit(
+            "dictation-error",
+            "Whisper model not downloaded. Please download a model in Settings.",
+        );
+        let _ = std::fs::remove_file(&audio_path);
+        let _ = app.emit("dictation-stopped", ());
+        return Ok(());
+    }
+
+    // Whisper inference is heavy CPU work; keep it off the tokio worker.
+    let lang = language.clone();
+    let audio_for_task = audio_path.clone();
+    let model_for_task = model_path.clone();
+    let join = tauri::async_runtime::spawn_blocking(move || {
+        transcribe_dictation_audio(&audio_for_task, &model_for_task, &lang)
+    });
+
+    match join.await {
+        Ok(Ok(text)) if !text.is_empty() => {
+            handle_dictation_result(&app, &text).await;
         }
-        SttEngine::Whisper => {
-            // Signal the capture stream + writer thread to stop, then drop the
-            // stream so cpal releases the device.
-            active
-                .stop_flag
-                .store(true, std::sync::atomic::Ordering::Relaxed);
-            drop(active.mic_stream);
-            drop(active.level_stream);
-
-            // Small grace period for the writer thread to drain & finalize WAV.
-            // (The capture layer's writer thread owns the file and closes it when
-            // the sender side is dropped; the drop above releases the tx clone.)
-            tokio::time::sleep(std::time::Duration::from_millis(250)).await;
-
-            let Some(audio_path) = active.audio_path.clone() else {
-                let _ = app.emit("dictation-stopped", ());
-                return Ok(());
-            };
-
-            if !audio_path.exists() {
-                let _ = app.emit("dictation-stopped", ());
-                return Ok(());
-            }
-
-            let _ = app.emit("dictation-processing", ());
-
-            let whisper_model = db
-                .get_setting("whisper_model")?
-                .unwrap_or_else(|| "base".to_string());
-            let language = db
-                .get_setting("dictation_language")?
-                .unwrap_or_else(|| "en".to_string());
-
-            let Some(model_path) = crate::transcribe::model::model_path(&app, &whisper_model)
-            else {
-                let _ = app.emit("dictation-error", "No whisper model configured.");
-                let _ = std::fs::remove_file(&audio_path);
-                let _ = app.emit("dictation-stopped", ());
-                return Ok(());
-            };
-
-            if !model_path.exists() {
-                let _ = app.emit(
-                    "dictation-error",
-                    "Whisper model not downloaded. Please download a model in Settings.",
-                );
-                let _ = std::fs::remove_file(&audio_path);
-                let _ = app.emit("dictation-stopped", ());
-                return Ok(());
-            }
-
-            // Whisper inference is heavy CPU work; keep it off the tokio worker.
-            let lang = language.clone();
-            let audio_for_task = audio_path.clone();
-            let model_for_task = model_path.clone();
-            let join = tauri::async_runtime::spawn_blocking(move || {
-                transcribe_dictation_audio(&audio_for_task, &model_for_task, &lang)
-            });
-
-            match join.await {
-                Ok(Ok(text)) if !text.is_empty() => {
-                    handle_dictation_result(&app, &text).await;
-                }
-                Ok(Ok(_)) => {
-                    log::warn!("Whisper returned empty transcription");
-                    let _ = app.emit(
-                        "dictation-error",
-                        "No speech detected — check your microphone input and volume.",
-                    );
-                }
-                Ok(Err(e)) => {
-                    log::error!("Whisper transcription failed: {}", e);
-                    let _ = app.emit("dictation-error", e.to_string());
-                }
-                Err(e) => {
-                    log::error!("Whisper task panicked: {}", e);
-                    let _ = app.emit("dictation-error", format!("Transcription task failed: {e}"));
-                }
-            }
-
-            let _ = std::fs::remove_file(&audio_path);
+        Ok(Ok(_)) => {
+            log::warn!("Whisper returned empty transcription");
+            let _ = app.emit(
+                "dictation-error",
+                "No speech detected — check your microphone input and volume.",
+            );
+        }
+        Ok(Err(e)) => {
+            log::error!("Whisper transcription failed: {}", e);
+            let _ = app.emit("dictation-error", e.to_string());
+        }
+        Err(e) => {
+            log::error!("Whisper task panicked: {}", e);
+            let _ = app.emit("dictation-error", format!("Transcription task failed: {e}"));
         }
     }
+
+    let _ = std::fs::remove_file(&audio_path);
 
     let _ = app.emit("dictation-stopped", ());
     Ok(())
@@ -607,7 +465,28 @@ async fn handle_dictation_result(app: &tauri::AppHandle, raw_text: &str) {
     let dictionary = db.get_dictation_dictionary().unwrap_or_default();
 
     // Build LLM config from settings
-    let llm_config = build_llm_config(&db);
+    let mut llm_config = build_llm_config(&db);
+
+    // If LLM cleanup is on with the Ollama provider but the configured model
+    // isn't pulled yet, kick off a pull in the background and skip LLM
+    // cleanup for this run (so the user still gets their text pasted).
+    if llm_config.enabled && llm_config.provider == "ollama" {
+        if !ollama_model_present(&llm_config.model, &llm_config.endpoint).await {
+            let _ = app.emit(
+                "dictation-llm-model-pulling",
+                serde_json::json!({ "model": llm_config.model }),
+            );
+            let app_clone = app.clone();
+            let model_clone = llm_config.model.clone();
+            tauri::async_runtime::spawn(async move {
+                if let Err(e) = pull_ollama_model_internal(&app_clone, &model_clone).await {
+                    log::warn!("Auto-pull of Ollama model {model_clone} failed: {e}");
+                }
+            });
+            // Disable LLM for this dictation; raw transcription is still good.
+            llm_config.enabled = false;
+        }
+    }
 
     let target_app = frontmost_app::get_frontmost_app();
 
@@ -628,35 +507,41 @@ async fn handle_dictation_result(app: &tauri::AppHandle, raw_text: &str) {
         .map(|v| v == "1")
         .unwrap_or(false);
 
-    let engine_str = db
-        .get_setting("dictation_stt_engine")
-        .unwrap_or(None)
-        .unwrap_or_else(|| "whisper".to_string());
-
     match &result {
         ProcessResult::Text(text) | ProcessResult::Snippet(text) => {
-            let success = text_injector::inject_text(text, flow_mode);
+            // text_injector blocks (clipboard + main-thread paste); keep it off
+            // the tokio runtime.
+            let text_clone = text.clone();
+            let success = tauri::async_runtime::spawn_blocking(move || {
+                text_injector::inject_text(&text_clone, flow_mode)
+            })
+            .await
+            .unwrap_or(false);
+
             if !success {
                 text_injector::open_accessibility_settings();
                 let _ = app.emit("dictation-error", "Accessibility permission required");
             }
 
-            // Log to history
             let _ = db.add_dictation_history(
                 raw_text,
                 text,
                 Some(&target_app),
-                Some(&engine_str),
+                Some("whisper"),
             );
         }
         ProcessResult::KeyCombo(combo) => {
-            text_injector::simulate_key_combo(combo);
+            let combo_clone = combo.clone();
+            let _ = tauri::async_runtime::spawn_blocking(move || {
+                text_injector::simulate_key_combo(&combo_clone);
+            })
+            .await;
 
             let _ = db.add_dictation_history(
                 raw_text,
                 &format!("[key combo: {}]", combo),
                 Some(&target_app),
-                Some(&engine_str),
+                Some("whisper"),
             );
         }
     }
@@ -683,4 +568,42 @@ fn build_llm_config(db: &Database) -> DictationLlmConfig {
         system_prompt: crate::dictation::processor::default_dictation_prompt(),
         code_mode: get("dictation_code_mode", "0") == "1",
     }
+}
+
+/// Returns true if the given model name (with or without :tag) is among
+/// Ollama's locally available models. False if Ollama isn't reachable.
+async fn ollama_model_present(model: &str, endpoint: &str) -> bool {
+    use crate::ai::ollama::OllamaClient;
+    // The endpoint setting may include the chat-completions path; strip down
+    // to the base. Empty → use OllamaClient default.
+    let base = endpoint
+        .trim_end_matches('/')
+        .trim_end_matches("/v1/chat/completions")
+        .trim_end_matches("/api/chat")
+        .trim_end_matches("/api/generate");
+    let client = if base.is_empty() {
+        OllamaClient::new(None)
+    } else {
+        OllamaClient::new(Some(base))
+    };
+    let status = client.check_status().await;
+    if !status.available {
+        return false;
+    }
+    // Ollama lists models as `name:tag`; match by stripping the `:tag` if the
+    // user wrote a bare name like `llama3.2`.
+    let want = model.trim();
+    status.models.iter().any(|m| {
+        m == want || m.split(':').next().map(|n| n == want).unwrap_or(false)
+    })
+}
+
+/// Re-uses the public `pull_ollama_model` flow but without going through the
+/// IPC layer — emits the same `ollama-pull-progress` events so any UI that
+/// already listens (e.g. an Ollama settings tab) reflects progress.
+async fn pull_ollama_model_internal(
+    app: &tauri::AppHandle,
+    model: &str,
+) -> Result<(), AppError> {
+    crate::commands::ai::pull_ollama_model(app.clone(), model.to_string()).await
 }

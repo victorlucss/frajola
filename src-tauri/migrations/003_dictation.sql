@@ -34,7 +34,6 @@ CREATE INDEX idx_dictation_history_created ON dictation_history(created_at);
 INSERT OR IGNORE INTO settings (key, value) VALUES
   ('dictation_enabled', '1'),
   ('dictation_hotkey_mode', 'push_to_talk'),
-  ('dictation_stt_engine', 'whisper'),
   ('dictation_language', 'en'),
   ('dictation_llm_enabled', '0'),
   ('dictation_llm_correction_level', '3'),

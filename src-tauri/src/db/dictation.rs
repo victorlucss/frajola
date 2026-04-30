@@ -295,8 +295,5 @@ mod tests {
 
         let mode = db.get_setting("dictation_hotkey_mode").unwrap();
         assert_eq!(mode, Some("push_to_talk".to_string()));
-
-        let engine = db.get_setting("dictation_stt_engine").unwrap();
-        assert_eq!(engine, Some("whisper".to_string()));
     }
 }

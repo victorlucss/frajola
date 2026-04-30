@@ -356,7 +356,4 @@ fn test_db_fresh_install_defaults_to_push_to_talk() {
         Some("push_to_talk".to_string()),
         "fresh installs must default to push_to_talk to match get_dictation_config"
     );
-
-    let engine = db.get_setting("dictation_stt_engine").unwrap();
-    assert_eq!(engine, Some("whisper".to_string()));
 }

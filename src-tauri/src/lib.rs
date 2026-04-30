@@ -54,12 +54,6 @@ pub fn run() {
             // Register global hotkey for dictation
             register_dictation_hotkey(app.handle())?;
 
-            // Request permissions on macOS
-            #[cfg(target_os = "macos")]
-            {
-                dictation::apple_speech::request_permissions();
-            }
-
             // On non-macOS: use native decorations and clear vibrancy effects
             #[cfg(not(target_os = "macos"))]
             {
@@ -118,6 +112,8 @@ pub fn run() {
             commands::settings::get_settings,
             commands::settings::get_setting,
             commands::settings::set_setting,
+            commands::settings::clear_setting,
+            commands::settings::is_setting_configured,
             commands::meetings::list_meetings,
             commands::meetings::get_meeting,
             commands::meetings::delete_meeting,

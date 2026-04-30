@@ -5,7 +5,6 @@ import { SelectField } from "./fields";
 interface DictationConfig {
   enabled: boolean;
   hotkeyMode: string;
-  sttEngine: string;
   language: string;
   llmEnabled: boolean;
   llmCorrectionLevel: number;
@@ -120,18 +119,8 @@ export default function DictationSettings() {
       </div>
 
       <div className={config.enabled ? "" : "opacity-50 pointer-events-none"}>
-        {/* Engine & Language */}
+        {/* Language */}
         <div className="space-y-4">
-          <SelectField
-            label="Speech Engine"
-            value={config.sttEngine}
-            options={[
-              { value: "apple", label: "Apple Speech (Real-time)" },
-              { value: "whisper", label: "Whisper (Local)" },
-            ]}
-            onChange={(v) => save({ sttEngine: v })}
-          />
-
           <SelectField
             label="Language"
             value={config.language}

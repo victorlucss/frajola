@@ -19,22 +19,6 @@ impl HotkeyMode {
     }
 }
 
-/// Which STT engine to use for dictation.
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum SttEngine {
-    Apple,
-    Whisper,
-}
-
-impl SttEngine {
-    pub fn from_str(s: &str) -> Self {
-        match s {
-            "apple" => Self::Apple,
-            _ => Self::Whisper,
-        }
-    }
-}
-
 /// Runtime state for an active dictation session.
 pub struct ActiveDictation {
     pub stop_flag: Arc<AtomicBool>,
@@ -42,7 +26,6 @@ pub struct ActiveDictation {
     pub level_stream: Option<Stream>,
     pub level_value: Arc<AtomicU32>,
     pub audio_path: Option<std::path::PathBuf>,
-    pub engine: SttEngine,
 }
 
 /// Managed state for the dictation subsystem.
@@ -88,13 +71,6 @@ mod tests {
     }
 
     #[test]
-    fn test_stt_engine_from_str() {
-        assert_eq!(SttEngine::from_str("apple"), SttEngine::Apple);
-        assert_eq!(SttEngine::from_str("whisper"), SttEngine::Whisper);
-        assert_eq!(SttEngine::from_str("unknown"), SttEngine::Whisper);
-    }
-
-    #[test]
     fn test_dictation_state_lifecycle() {
         let state = DictationState::new();
         assert!(!state.is_active());
@@ -108,7 +84,6 @@ mod tests {
                 level_stream: None,
                 level_value: Arc::new(AtomicU32::new(0)),
                 audio_path: None,
-                engine: SttEngine::Whisper,
             });
         }
         assert!(state.is_active());
