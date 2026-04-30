@@ -21,10 +21,14 @@ export default function DictationPill({ processing = false }: Props) {
       const next = new Array(DOT_COUNT);
 
       if (processing) {
-        // Smooth traveling wave during LLM processing
-        phase.current += 0.06;
+        // Indeterminate wave during LLM processing — same traveling sine as the
+        // listening state so the transition reads as a tempo change, not a
+        // visual identity change. Amplitude is held at a moderate constant.
+        phase.current += 0.08;
+        const holdLevel = 0.55;
         for (let i = 0; i < DOT_COUNT; i++) {
-          next[i] = (Math.sin(phase.current + i * 0.6) + 1) / 2;
+          const wave = (Math.sin(phase.current + i * 0.7) + 1) / 2;
+          next[i] = wave * holdLevel;
         }
       } else {
         // Poll mic level
@@ -36,14 +40,11 @@ export default function DictationPill({ processing = false }: Props) {
         }
 
         const level = Math.max(0, Math.min(1, lv));
-        // Light smoothing for natural feel
         smoothLevel.current += (level - smoothLevel.current) * 0.5;
         const sl = smoothLevel.current;
 
-        // Advance phase based on audio level — louder = faster wave
         phase.current += 0.05 + sl * 0.15;
 
-        // Traveling sine wave whose amplitude is driven by mic level
         for (let i = 0; i < DOT_COUNT; i++) {
           const wave = (Math.sin(phase.current + i * 0.7) + 1) / 2;
           next[i] = wave * sl;
@@ -78,7 +79,7 @@ export default function DictationPill({ processing = false }: Props) {
                 width: size,
                 height: size,
                 opacity: 0.3 + d * 0.7,
-                backgroundColor: processing ? "rgba(154, 176, 77, 0.9)" : "white",
+                backgroundColor: "white",
               }}
             />
           );

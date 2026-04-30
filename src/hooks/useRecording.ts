@@ -65,8 +65,19 @@ export function useRecording(options?: UseRecordingOptions): UseRecordingReturn 
     setSilenceWarning(false);
     localActionRef.current = true;
     try {
+      // If caller didn't specify, fall back to the persisted General-settings choice.
+      let resolvedMic = micDeviceId;
+      if (resolvedMic === undefined) {
+        try {
+          const saved = await invoke<string | null>("get_setting", { key: "mic_device_id" });
+          if (saved) resolvedMic = saved;
+        } catch {
+          // Best effort; fall back to system default.
+        }
+      }
+
       const result = await invoke<StartRecordingResult>("start_recording", {
-        micDeviceId: micDeviceId ?? null,
+        micDeviceId: resolvedMic ?? null,
         captureSystemAudio: true,
       });
       setMeetingId(result.meeting.id);

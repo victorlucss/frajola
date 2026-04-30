@@ -18,6 +18,7 @@ export default function OverlayApp() {
   const [processing, setProcessing] = useState(false);
   // Keep DictationPill mounted briefly after dictation stops for exit animation
   const [showWave, setShowWave] = useState(false);
+  const [meetingPillEnabled, setMeetingPillEnabled] = useState(true);
 
   const recording = useRecording({
     onComplete: async (meeting) => {
@@ -34,37 +35,71 @@ export default function OverlayApp() {
     return () => { unlistenDetection.then((f) => f()); };
   }, []);
 
+  // Meeting-pill visibility: load initial + react to setting changes from
+  // the main window (emitted via tauri `emit`).
+  useEffect(() => {
+    invoke<string | null>("get_setting", { key: "show_meeting_pill" })
+      .then((v) => setMeetingPillEnabled(v !== "0"))
+      .catch(() => setMeetingPillEnabled(true));
+
+    const unlisten = listen<boolean>("meeting-pill-visibility-changed", (e) => {
+      setMeetingPillEnabled(!!e.payload);
+    });
+    return () => { unlisten.then((f) => f()); };
+  }, []);
+
+  // Drive overlay window visibility from the setting — but keep it available
+  // for dictation, which always re-shows + resizes via show_dictation_overlay.
+  useEffect(() => {
+    if (dictating || showWave) return; // don't fight the dictation flow
+    if (meetingPillEnabled) {
+      invoke("show_overlay").catch(() => {});
+    } else {
+      invoke("hide_overlay").catch(() => {});
+    }
+  }, [meetingPillEnabled, dictating, showWave]);
+
   // Dictation lifecycle
   useEffect(() => {
+    const reset = () => {
+      setDictating(false);
+      setProcessing(false);
+      setTimeout(() => {
+        setShowWave(false);
+        invoke("hide_dictation_overlay").catch(() => {});
+        // If the meeting pill is off, fully hide the overlay window after
+        // dictation ends. Otherwise the existing compact-pill restore stays.
+        if (!meetingPillEnabled) {
+          invoke("hide_overlay").catch(() => {});
+        }
+      }, 300);
+    };
+
     const unsubs = [
       listen("dictation-started", () => {
         setShowWave(true);
         setProcessing(false);
+        // Make sure the window is visible before the dictation resize runs
+        // (it's hidden whenever meetingPillEnabled is off).
+        invoke("show_overlay").catch(() => {});
         requestAnimationFrame(() => setDictating(true));
         invoke("show_dictation_overlay").catch(() => {});
       }),
       listen("dictation-processing", () => {
         setProcessing(true);
       }),
-      listen("dictation-completed", () => {
-        setDictating(false);
-        setProcessing(false);
-        setTimeout(() => {
-          setShowWave(false);
-          invoke("hide_dictation_overlay").catch(() => {});
-        }, 300);
-      }),
-      listen("dictation-error", () => {
-        setDictating(false);
-        setProcessing(false);
-        setTimeout(() => {
-          setShowWave(false);
-          invoke("hide_dictation_overlay").catch(() => {});
-        }, 300);
+      listen("dictation-completed", reset),
+      // "stopped" is emitted on every stop path, including ones that produce
+      // no completion event (e.g. whisper empty transcription). Treat it as a
+      // final reset so the pill never hangs.
+      listen("dictation-stopped", reset),
+      listen<string>("dictation-error", (e) => {
+        console.error("Dictation error:", e.payload);
+        reset();
       }),
     ];
     return () => { unsubs.forEach((p) => p.then((f) => f())); };
-  }, []);
+  }, [meetingPillEnabled]);
 
   const handleExpand = () => {
     setExpanded(true);

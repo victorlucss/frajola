@@ -60,6 +60,44 @@ export function InputField({
   );
 }
 
+export function ToggleField({
+  label,
+  description,
+  checked,
+  onChange,
+}: {
+  label: string;
+  description?: string;
+  checked: boolean;
+  onChange: (next: boolean) => void;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <div className="min-w-0">
+        <div className="text-sm font-medium text-text-secondary">{label}</div>
+        {description && (
+          <div className="mt-0.5 text-xs text-text-tertiary">{description}</div>
+        )}
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onChange(!checked)}
+        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
+          checked ? "bg-accent" : "bg-border"
+        }`}
+      >
+        <span
+          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+            checked ? "translate-x-5" : "translate-x-0.5"
+          }`}
+        />
+      </button>
+    </div>
+  );
+}
+
 export function CircularProgress({ percent, size = 20 }: { percent: number; size?: number }) {
   const strokeWidth = 2.5;
   const radius = (size - strokeWidth) / 2;
