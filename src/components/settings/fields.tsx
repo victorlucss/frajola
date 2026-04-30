@@ -1,7 +1,21 @@
+import { useId } from "react";
 import type React from "react";
 
-export function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <label className="block text-sm font-medium text-text-secondary mb-1.5">{children}</label>;
+export function FieldLabel({
+  children,
+  htmlFor,
+}: {
+  children: React.ReactNode;
+  htmlFor?: string;
+}) {
+  return (
+    <label
+      htmlFor={htmlFor}
+      className="block text-sm font-medium text-text-secondary mb-1.5"
+    >
+      {children}
+    </label>
+  );
 }
 
 export function SelectField({
@@ -15,10 +29,12 @@ export function SelectField({
   options: { value: string; label: string }[];
   onChange: (value: string) => void;
 }) {
+  const id = useId();
   return (
     <div>
-      <FieldLabel>{label}</FieldLabel>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <select
+        id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-lg border border-border bg-bg-card px-3 py-2 text-sm text-text-primary outline-none focus:border-accent"
@@ -46,10 +62,12 @@ export function InputField({
   placeholder?: string;
   onChange: (value: string) => void;
 }) {
+  const id = useId();
   return (
     <div>
-      <FieldLabel>{label}</FieldLabel>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <input
+        id={id}
         type={type}
         value={value}
         placeholder={placeholder}
