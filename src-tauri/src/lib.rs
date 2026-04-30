@@ -73,9 +73,22 @@ pub fn run() {
             let handle = app.handle().clone();
             tauri::async_runtime::spawn(system::meeting_detector::start_detection_loop(handle));
 
-            // Show the overlay on startup — it stays visible at all times
+            // Show the overlay on startup unless the user has disabled the
+            // meeting pill. The window config starts at 40×40 (visible:false);
+            // bring it to idle-pill size so content isn't clipped.
             if let Some(overlay_win) = app.get_webview_window("overlay") {
-                let _ = overlay_win.show();
+                let _ = overlay_win.set_size(tauri::Size::Logical(tauri::LogicalSize {
+                    width: 118.0,
+                    height: 48.0,
+                }));
+                let meeting_pill_on = app
+                    .try_state::<Database>()
+                    .and_then(|db| db.get_setting("show_meeting_pill").ok().flatten())
+                    .map(|v| v != "0")
+                    .unwrap_or(true);
+                if meeting_pill_on {
+                    let _ = overlay_win.show();
+                }
             }
 
             Ok(())
@@ -223,11 +236,12 @@ fn register_dictation_hotkey(app: &tauri::AppHandle) -> Result<(), Box<dyn std::
     app.global_shortcut().on_shortcut(hotkey, move |app, _shortcut, event| {
         let app_handle = app.clone();
 
-        // Read hotkey mode from settings (default: push_to_talk)
+        // Read hotkey mode from settings; treat unset/unknown as push-to-talk,
+        // matching the migration default.
         let mode = app_handle
             .try_state::<Database>()
             .and_then(|db| db.get_setting("dictation_hotkey_mode").ok().flatten())
-            .unwrap_or_default();
+            .unwrap_or_else(|| "push_to_talk".to_string());
 
         let is_push_to_talk = mode != "toggle";
 
@@ -237,26 +251,13 @@ fn register_dictation_hotkey(app: &tauri::AppHandle) -> Result<(), Box<dyn std::
                     let dictation_state = app_handle.state::<DictationState>();
 
                     if is_push_to_talk {
-                        // Push-to-talk: always start on press
                         if !dictation_state.is_active() {
-                            let db = app_handle.state::<Database>();
-                            let recording = app_handle.state::<audio::state::RecordingState>();
-                            if let Err(e) = commands::dictation::start_dictation(db, dictation_state, recording, app_handle.clone()).await {
-                                log::error!("Failed to start dictation: {}", e);
-                            }
+                            start_dictation_from_hotkey(&app_handle).await;
                         }
+                    } else if dictation_state.is_active() {
+                        stop_dictation_from_hotkey(&app_handle).await;
                     } else {
-                        // Toggle: start/stop on press
-                        if dictation_state.is_active() {
-                            let db = app_handle.state::<Database>();
-                            let _ = commands::dictation::stop_dictation(db, dictation_state, app_handle.clone()).await;
-                        } else {
-                            let db = app_handle.state::<Database>();
-                            let recording = app_handle.state::<audio::state::RecordingState>();
-                            if let Err(e) = commands::dictation::start_dictation(db, dictation_state, recording, app_handle.clone()).await {
-                                log::error!("Failed to start dictation: {}", e);
-                            }
-                        }
+                        start_dictation_from_hotkey(&app_handle).await;
                     }
                 });
             }
@@ -265,8 +266,7 @@ fn register_dictation_hotkey(app: &tauri::AppHandle) -> Result<(), Box<dyn std::
                     tauri::async_runtime::spawn(async move {
                         let dictation_state = app_handle.state::<DictationState>();
                         if dictation_state.is_active() {
-                            let db = app_handle.state::<Database>();
-                            let _ = commands::dictation::stop_dictation(db, dictation_state, app_handle.clone()).await;
+                            stop_dictation_from_hotkey(&app_handle).await;
                         }
                     });
                 }
@@ -276,4 +276,29 @@ fn register_dictation_hotkey(app: &tauri::AppHandle) -> Result<(), Box<dyn std::
 
     log::info!("Dictation hotkey registered: {}", hotkey);
     Ok(())
+}
+
+async fn start_dictation_from_hotkey(app: &tauri::AppHandle) {
+    use tauri::Emitter;
+    let dictation_state = app.state::<DictationState>();
+    let db = app.state::<Database>();
+    let recording = app.state::<audio::state::RecordingState>();
+    if let Err(e) =
+        commands::dictation::start_dictation(db, dictation_state, recording, app.clone()).await
+    {
+        log::error!("Failed to start dictation: {}", e);
+        let _ = app.emit("dictation-error", e.to_string());
+    }
+}
+
+async fn stop_dictation_from_hotkey(app: &tauri::AppHandle) {
+    use tauri::Emitter;
+    let dictation_state = app.state::<DictationState>();
+    let db = app.state::<Database>();
+    if let Err(e) =
+        commands::dictation::stop_dictation(db, dictation_state, app.clone()).await
+    {
+        log::error!("Failed to stop dictation: {}", e);
+        let _ = app.emit("dictation-error", e.to_string());
+    }
 }

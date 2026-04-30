@@ -1,5 +1,5 @@
 use std::path::Path;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::{mpsc, Arc};
 use std::thread::{self, JoinHandle};
 
@@ -16,6 +16,9 @@ pub struct CaptureHandles {
     pub system_audio_error: Option<String>,
     /// Set to `true` if the mic appears silent after the first few seconds of recording.
     pub silence_warning: Arc<AtomicBool>,
+    /// Live mic RMS level in [0, 1], stored as `f32::to_bits`. Updated from the
+    /// cpal audio callback so UI overlays can poll it without a second stream.
+    pub mic_level: Arc<AtomicU32>,
 }
 
 /// Tagged audio chunk so the writer can distinguish sources.
@@ -63,12 +66,22 @@ pub fn start_capture(
     let mic_stop = stop_flag.clone();
     let mic_paused = paused_flag.clone();
     let mic_channels = mic_config.channels() as usize;
+    let mic_level = Arc::new(AtomicU32::new(0));
+    let mic_level_writer = mic_level.clone();
 
     let mic_stream = build_input_stream(
         &mic_device,
         &mic_config,
         mic_channels,
         move |mono| {
+            // Compute RMS and update the shared atomic before forwarding.
+            // Matches the visual scaling used elsewhere (sqrt(clamp(rms * 20, 1))).
+            if !mono.is_empty() {
+                let sum_sq: f32 = mono.iter().map(|s| s * s).sum();
+                let rms = (sum_sq / mono.len() as f32).sqrt();
+                let level = (rms * 20.0).min(1.0).sqrt().min(1.0);
+                mic_level_writer.store(level.to_bits(), Ordering::Relaxed);
+            }
             let _ = mic_tx.send(AudioChunk::Mic(mono));
         },
         mic_stop,
@@ -153,6 +166,7 @@ pub fn start_capture(
         writer_thread,
         system_audio_error,
         silence_warning: silence_flag,
+        mic_level,
     })
 }
 

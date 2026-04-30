@@ -299,46 +299,86 @@ fn start_apple_speech_dictation(
 ) -> Result<(), AppError> {
     use crate::dictation::apple_speech;
     use crate::dictation::state::ActiveDictation;
-    use std::sync::atomic::AtomicBool;
+    use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
     use std::sync::Arc;
+
+    // Populate the ActiveDictation slot BEFORE the Swift bridge starts firing
+    // callbacks. Otherwise a very fast press→release sequence on push-to-talk
+    // can see is_active()==false between the `apple_speech::start` call and the
+    // lock write, and the stop path returns "Not dictating".
+    {
+        let mut lock = dictation
+            .active
+            .lock()
+            .map_err(|_| AppError::General("Dictation state lock poisoned".into()))?;
+        if lock.is_some() {
+            return Err(AppError::General("Already dictating".into()));
+        }
+        let level_value = Arc::new(AtomicU32::new(0));
+        *lock = Some(ActiveDictation {
+            stop_flag: Arc::new(AtomicBool::new(false)),
+            mic_stream: None,
+            level_stream: None,
+            level_value,
+            audio_path: None,
+            engine: SttEngine::Apple,
+        });
+    }
+
+    // Grab a handle to the level atomic we just stored, so the Swift level
+    // callback can write to it directly (no duplicate cpal stream needed).
+    let level_writer = {
+        let lock = dictation
+            .active
+            .lock()
+            .map_err(|_| AppError::General("Dictation state lock poisoned".into()))?;
+        lock.as_ref()
+            .map(|a| a.level_value.clone())
+            .ok_or_else(|| AppError::General("Failed to install Apple Speech".into()))?
+    };
 
     let app_handle = app.clone();
     let app_handle2 = app.clone();
     let app_handle3 = app.clone();
 
-    // Track last partial text length to derive speaking activity
+    // Track last partial text length to derive speaking activity when the Swift
+    // level callback doesn't fire (some macOS versions).
     let last_partial_len = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
     let last_partial_len2 = last_partial_len.clone();
+    let level_writer2 = level_writer.clone();
 
     let callbacks = apple_speech::SpeechCallbacks {
         on_result: Box::new(move |text: &str, is_final: bool| {
             if is_final {
                 let text = text.to_string();
                 let handle = app_handle.clone();
-                // Reset level when done
                 let _ = app_handle.emit("dictation-audio-level", 0.0_f32);
                 tauri::async_runtime::spawn(async move {
                     handle_dictation_result(&handle, &text).await;
                 });
             } else {
                 let _ = app_handle.emit("dictation-partial-result", text);
-                // Derive level from text changes — if text is growing, user is speaking
                 let new_len = text.len();
-                let old_len = last_partial_len.swap(new_len, std::sync::atomic::Ordering::Relaxed);
+                let old_len = last_partial_len.swap(new_len, Ordering::Relaxed);
                 let level: f32 = if new_len > old_len {
-                    // Speaking — emit a random-ish level based on text growth
                     let growth = (new_len - old_len) as f32;
                     (0.4 + (growth / 10.0).min(0.6)).min(1.0)
                 } else {
                     0.15
                 };
+                // Only write the derived level if the Swift level callback hasn't
+                // been writing recently (its value would be non-zero).
+                let current = f32::from_bits(level_writer.load(Ordering::Relaxed));
+                if current < 1e-6 {
+                    level_writer.store(level.to_bits(), Ordering::Relaxed);
+                }
                 let _ = app_handle.emit("dictation-audio-level", level);
             }
         }),
         on_level: Box::new(move |level: f32| {
-            // Swift level callback (may not fire on all macOS versions)
+            level_writer2.store(level.to_bits(), Ordering::Relaxed);
             let _ = app_handle2.emit("dictation-audio-level", level);
-            last_partial_len2.store(0, std::sync::atomic::Ordering::Relaxed);
+            last_partial_len2.store(0, Ordering::Relaxed);
         }),
         on_error: Box::new(move |error: &str| {
             log::error!("Apple Speech error: {}", error);
@@ -347,27 +387,6 @@ fn start_apple_speech_dictation(
     };
 
     apple_speech::start(language, callbacks);
-
-    // Start mic level monitor (separate cpal stream for audio visualization)
-    let stop_flag = Arc::new(AtomicBool::new(false));
-    let (level_stream, level_value) = crate::dictation::mic_level::start_level_monitor(
-        stop_flag.clone(),
-    )
-    .map(|(s, v)| (Some(s), v))
-    .unwrap_or_else(|_| (None, std::sync::Arc::new(std::sync::atomic::AtomicU32::new(0))));
-
-    let mut lock = dictation
-        .active
-        .lock()
-        .map_err(|_| AppError::General("Dictation state lock poisoned".into()))?;
-    *lock = Some(ActiveDictation {
-        stop_flag,
-        mic_stream: None,
-        level_stream,
-        level_value,
-        audio_path: None,
-        engine: SttEngine::Apple,
-    });
 
     Ok(())
 }
@@ -393,8 +412,17 @@ fn start_whisper_dictation(
     let stop_flag = Arc::new(std::sync::atomic::AtomicBool::new(false));
     let paused_flag = Arc::new(AtomicBool::new(false));
 
+    // Honour the user's mic_device_id preference (General settings). Empty or
+    // unset → cpal's default input device.
+    let db = app.state::<Database>();
+    let mic_device_id = db
+        .get_setting("mic_device_id")
+        .ok()
+        .flatten()
+        .filter(|s| !s.is_empty());
+
     let handles = start_capture(
-        None,
+        mic_device_id.as_deref(),
         false, // mic only for dictation
         &audio_path,
         stop_flag.clone(),
@@ -402,21 +430,23 @@ fn start_whisper_dictation(
     )
     .map_err(AppError::Audio)?;
 
+    // Level is written directly from the capture stream's audio callback, so
+    // we don't open a second cpal stream (macOS occasionally starves the
+    // secondary client and the waveform flatlines).
+    let level_value = handles.mic_level.clone();
+
     let mut lock = dictation
         .active
         .lock()
         .map_err(|_| AppError::General("Dictation state lock poisoned".into()))?;
-    // Start mic level monitor for whisper mode too
-    let (level_stream, level_value) = crate::dictation::mic_level::start_level_monitor(
-        stop_flag.clone(),
-    )
-    .map(|(s, v)| (Some(s), v))
-    .unwrap_or_else(|_| (None, std::sync::Arc::new(std::sync::atomic::AtomicU32::new(0))));
+    if lock.is_some() {
+        return Err(AppError::General("Already dictating".into()));
+    }
 
     *lock = Some(ActiveDictation {
         stop_flag,
         mic_stream: handles.mic_stream,
-        level_stream,
+        level_stream: None,
         level_value,
         audio_path: Some(audio_path),
         engine: SttEngine::Whisper,
@@ -445,64 +475,91 @@ pub async fn stop_dictation(
             #[cfg(target_os = "macos")]
             {
                 crate::dictation::apple_speech::stop();
-                // Apple Speech handles result delivery via callback
+                // Apple Speech delivers the final result asynchronously via the
+                // on_result callback; we don't wait here.
             }
         }
         SttEngine::Whisper => {
-            // Stop recording
+            // Signal the capture stream + writer thread to stop, then drop the
+            // stream so cpal releases the device.
             active
                 .stop_flag
                 .store(true, std::sync::atomic::Ordering::Relaxed);
             drop(active.mic_stream);
+            drop(active.level_stream);
 
-            // Small delay for the writer thread to finish
-            tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+            // Small grace period for the writer thread to drain & finalize WAV.
+            // (The capture layer's writer thread owns the file and closes it when
+            // the sender side is dropped; the drop above releases the tx clone.)
+            tokio::time::sleep(std::time::Duration::from_millis(250)).await;
 
-            // Transcribe the recorded audio
-            if let Some(audio_path) = &active.audio_path {
-                if audio_path.exists() {
-                    let _ = app.emit("dictation-processing", ());
+            let Some(audio_path) = active.audio_path.clone() else {
+                let _ = app.emit("dictation-stopped", ());
+                return Ok(());
+            };
 
-                    let whisper_model = db
-                        .get_setting("whisper_model")?
-                        .unwrap_or_else(|| "base".to_string());
-                    let language = db
-                        .get_setting("dictation_language")?
-                        .unwrap_or_else(|| "en".to_string());
+            if !audio_path.exists() {
+                let _ = app.emit("dictation-stopped", ());
+                return Ok(());
+            }
 
-                    let model_path = crate::transcribe::model::model_path(&app, &whisper_model);
+            let _ = app.emit("dictation-processing", ());
 
-                    if let Some(model_path) = model_path {
-                        if model_path.exists() {
-                            match transcribe_dictation_audio(audio_path, &model_path, &language) {
-                                Ok(text) if !text.is_empty() => {
-                                    handle_dictation_result(&app, &text).await;
-                                }
-                                Ok(_) => {
-                                    log::warn!("Whisper returned empty transcription");
-                                }
-                                Err(e) => {
-                                    log::error!("Whisper transcription failed: {}", e);
-                                    let _ = app.emit("dictation-error", e.to_string());
-                                }
-                            }
-                        } else {
-                            let _ = app.emit(
-                                "dictation-error",
-                                "Whisper model not downloaded. Please download a model in Settings.",
-                            );
-                        }
-                    } else {
-                        let _ = app.emit(
-                            "dictation-error",
-                            "No whisper model configured.",
-                        );
-                    }
+            let whisper_model = db
+                .get_setting("whisper_model")?
+                .unwrap_or_else(|| "base".to_string());
+            let language = db
+                .get_setting("dictation_language")?
+                .unwrap_or_else(|| "en".to_string());
 
-                    // Clean up temp audio file
-                    let _ = std::fs::remove_file(audio_path);
+            let Some(model_path) = crate::transcribe::model::model_path(&app, &whisper_model)
+            else {
+                let _ = app.emit("dictation-error", "No whisper model configured.");
+                let _ = std::fs::remove_file(&audio_path);
+                let _ = app.emit("dictation-stopped", ());
+                return Ok(());
+            };
+
+            if !model_path.exists() {
+                let _ = app.emit(
+                    "dictation-error",
+                    "Whisper model not downloaded. Please download a model in Settings.",
+                );
+                let _ = std::fs::remove_file(&audio_path);
+                let _ = app.emit("dictation-stopped", ());
+                return Ok(());
+            }
+
+            // Whisper inference is heavy CPU work; keep it off the tokio worker.
+            let lang = language.clone();
+            let audio_for_task = audio_path.clone();
+            let model_for_task = model_path.clone();
+            let join = tauri::async_runtime::spawn_blocking(move || {
+                transcribe_dictation_audio(&audio_for_task, &model_for_task, &lang)
+            });
+
+            match join.await {
+                Ok(Ok(text)) if !text.is_empty() => {
+                    handle_dictation_result(&app, &text).await;
+                }
+                Ok(Ok(_)) => {
+                    log::warn!("Whisper returned empty transcription");
+                    let _ = app.emit(
+                        "dictation-error",
+                        "No speech detected — check your microphone input and volume.",
+                    );
+                }
+                Ok(Err(e)) => {
+                    log::error!("Whisper transcription failed: {}", e);
+                    let _ = app.emit("dictation-error", e.to_string());
+                }
+                Err(e) => {
+                    log::error!("Whisper task panicked: {}", e);
+                    let _ = app.emit("dictation-error", format!("Transcription task failed: {e}"));
                 }
             }
+
+            let _ = std::fs::remove_file(&audio_path);
         }
     }
 
