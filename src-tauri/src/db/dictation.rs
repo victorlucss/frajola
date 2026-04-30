@@ -184,9 +184,7 @@ impl Database {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::db::Database;
-    use std::path::Path;
     use tempfile::NamedTempFile;
 
     fn test_db() -> Database {
@@ -296,7 +294,7 @@ mod tests {
         assert_eq!(enabled, Some("1".to_string()));
 
         let mode = db.get_setting("dictation_hotkey_mode").unwrap();
-        assert_eq!(mode, Some("toggle".to_string()));
+        assert_eq!(mode, Some("push_to_talk".to_string()));
 
         let engine = db.get_setting("dictation_stt_engine").unwrap();
         assert_eq!(engine, Some("whisper".to_string()));

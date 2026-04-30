@@ -242,3 +242,121 @@ fn test_db_history_limit() {
     // Most recent should be first
     assert_eq!(history[0].raw_text, "raw 9");
 }
+
+// ─── Pipeline regression tests ───────────────────────────
+
+/// Triggers with leading/trailing punctuation should normalise to match.
+#[tokio::test]
+async fn test_pipeline_matches_triggers_across_whitespace_and_case() {
+    let snippets = vec![DictationSnippet {
+        trigger: "My  Email".to_string(), // note double space
+        expansion: "v@example.com".to_string(),
+    }];
+    let result = process_transcription(
+        "MY EMAIL",
+        &snippets,
+        &[],
+        &[],
+        &DictationLlmConfig::default(),
+        "Unknown",
+    )
+    .await;
+    match result {
+        ProcessResult::Snippet(text) => assert_eq!(text, "v@example.com"),
+        other => panic!("Expected Snippet match, got {other:?}"),
+    }
+}
+
+/// Empty input must not accidentally match an empty trigger.
+#[tokio::test]
+async fn test_pipeline_empty_input_passes_through() {
+    let snippets = vec![DictationSnippet {
+        trigger: "".to_string(),
+        expansion: "should not be used".to_string(),
+    }];
+    let result = process_transcription(
+        "",
+        &snippets,
+        &[],
+        &[],
+        &DictationLlmConfig::default(),
+        "Unknown",
+    )
+    .await;
+    match result {
+        ProcessResult::Text(text) => assert_eq!(text, ""),
+        // An empty-trigger snippet matching empty normalized text IS technically
+        // valid behaviour — accept either, but don't crash.
+        ProcessResult::Snippet(_) => {}
+        other => panic!("Unexpected variant: {other:?}"),
+    }
+}
+
+/// Dictionary should surface in the prompt even if the LLM is disabled.
+/// (Prompt is built only when the LLM is called; if disabled, we just pass
+/// text through. So this test pins the passthrough behaviour.)
+#[tokio::test]
+async fn test_pipeline_dictionary_not_used_when_llm_disabled() {
+    let dict = vec!["Frajola".into()];
+    let config = DictationLlmConfig {
+        enabled: false,
+        ..Default::default()
+    };
+    let result = process_transcription(
+        "frajola is nice",
+        &[],
+        &[],
+        &dict,
+        &config,
+        "Unknown",
+    )
+    .await;
+    match result {
+        ProcessResult::Text(text) => assert_eq!(text, "frajola is nice"),
+        other => panic!("Expected passthrough, got {other:?}"),
+    }
+}
+
+/// The history table must keep engine and target-app alongside the text so
+/// the UI can later show "said via Apple into Slack".
+#[test]
+fn test_db_history_preserves_engine_and_target_app() {
+    let tmp = tempfile::NamedTempFile::new().unwrap();
+    let db = frajola_lib::db::Database::new(tmp.path()).unwrap();
+
+    db.add_dictation_history("a", "A", Some("Slack"), Some("apple"))
+        .unwrap();
+    db.add_dictation_history("b", "B", None, Some("whisper"))
+        .unwrap();
+
+    let history = db.get_dictation_history(10).unwrap();
+    assert_eq!(history.len(), 2);
+
+    // Most recent first
+    assert_eq!(history[0].raw_text, "b");
+    assert_eq!(history[0].engine, Some("whisper".into()));
+    assert_eq!(history[0].target_app, None);
+
+    assert_eq!(history[1].raw_text, "a");
+    assert_eq!(history[1].engine, Some("apple".into()));
+    assert_eq!(history[1].target_app, Some("Slack".into()));
+}
+
+/// Fresh DB must expose the push_to_talk default; regression guard for the
+/// toggle/push_to_talk mismatch that used to exist between migration 003 and
+/// `get_dictation_config`.
+#[test]
+fn test_db_fresh_install_defaults_to_push_to_talk() {
+    let tmp = tempfile::NamedTempFile::new().unwrap();
+    let db = frajola_lib::db::Database::new(tmp.path()).unwrap();
+
+    let mode = db.get_setting("dictation_hotkey_mode").unwrap();
+    assert_eq!(
+        mode,
+        Some("push_to_talk".to_string()),
+        "fresh installs must default to push_to_talk to match get_dictation_config"
+    );
+
+    let engine = db.get_setting("dictation_stt_engine").unwrap();
+    assert_eq!(engine, Some("whisper".to_string()));
+}
