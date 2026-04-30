@@ -66,5 +66,6 @@
       "minimumSystemVersion": "14.2",
       "entitlements": "Entitlements.plist"
     }
-  }
+  },
+  "plugins": {}
 }
