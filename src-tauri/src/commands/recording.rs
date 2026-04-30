@@ -138,8 +138,13 @@ pub async fn stop_recording(
     drop(active._system_stream);
 
     if let Some(thread) = active.writer_thread {
-        thread
-            .join()
+        // Joining the writer can take seconds for long recordings (final WAV
+        // flush, fsync). Move it off the tokio worker.
+        let join_result = tauri::async_runtime::spawn_blocking(move || thread.join())
+            .await
+            .map_err(|e| AppError::Audio(format!("spawn_blocking failed: {e}")))?;
+
+        join_result
             .map_err(|_| AppError::Audio("Writer thread panicked".into()))?
             .map_err(AppError::Audio)?;
     }

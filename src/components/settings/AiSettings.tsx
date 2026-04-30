@@ -1,8 +1,68 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { listen } from "@tauri-apps/api/event";
-import { invoke } from "../../lib/tauri";
+import { invoke, isTauri } from "../../lib/tauri";
 import { FieldLabel, SelectField, InputField, CircularProgress, ProgressInlineBar } from "./fields";
 import type { SettingsSectionProps } from "./types";
+
+// API keys are never returned to the webview; this wrapper renders the input
+// with an empty value plus a "Configured" hint when the backend reports the
+// key is set. Typing replaces the stored value; leaving empty preserves it.
+function SecretField({
+  label,
+  settingKey,
+  placeholder,
+  updateSetting,
+}: {
+  label: string;
+  settingKey: string;
+  placeholder: string;
+  updateSetting: (k: string, v: string) => Promise<void>;
+}) {
+  const [configured, setConfigured] = useState<boolean | null>(null);
+  const [draft, setDraft] = useState("");
+  const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const refresh = useCallback(async () => {
+    if (!isTauri()) {
+      setConfigured(false);
+      return;
+    }
+    try {
+      const v = await invoke<boolean>("is_setting_configured", { key: settingKey });
+      setConfigured(v);
+    } catch {
+      setConfigured(false);
+    }
+  }, [settingKey]);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  return (
+    <div>
+      <div className="flex items-baseline justify-between">
+        <FieldLabel>{label}</FieldLabel>
+        {configured && draft.length === 0 && (
+          <span className="text-xs text-text-tertiary">Configured — leave empty to keep</span>
+        )}
+      </div>
+      <input
+        type="password"
+        value={draft}
+        placeholder={configured ? "•••• (hidden)" : placeholder}
+        onChange={(e) => {
+          const next = e.target.value;
+          setDraft(next);
+          if (debounce.current) clearTimeout(debounce.current);
+          debounce.current = setTimeout(async () => {
+            await updateSetting(settingKey, next);
+            await refresh();
+          }, 400);
+        }}
+        className="w-full rounded-lg border border-border bg-bg-card px-3 py-2 text-sm text-text-primary outline-none focus:border-accent placeholder:text-text-muted"
+      />
+    </div>
+  );
+}
 
 interface OllamaStatus {
   available: boolean;
@@ -382,22 +442,20 @@ export default function AiSettings({ getSetting, updateSetting }: SettingsSectio
       )}
 
       {provider === "openai" && (
-        <InputField
+        <SecretField
           label="OpenAI API Key"
-          type="password"
-          value={getSetting("openai_api_key") ?? ""}
+          settingKey="openai_api_key"
           placeholder="sk-..."
-          onChange={(v) => updateSetting("openai_api_key", v)}
+          updateSetting={updateSetting}
         />
       )}
 
       {provider === "anthropic" && (
-        <InputField
+        <SecretField
           label="Anthropic API Key"
-          type="password"
-          value={getSetting("anthropic_api_key") ?? ""}
+          settingKey="anthropic_api_key"
           placeholder="sk-ant-..."
-          onChange={(v) => updateSetting("anthropic_api_key", v)}
+          updateSetting={updateSetting}
         />
       )}
       </div>
@@ -440,12 +498,11 @@ export default function AiSettings({ getSetting, updateSetting }: SettingsSectio
               onChange={(v) => updateSetting("dictation_llm_model", v)}
             />
             {(getSetting("dictation_llm_provider") ?? "ollama") !== "ollama" && (
-              <InputField
+              <SecretField
                 label="API Key"
-                type="password"
-                value={getSetting("dictation_llm_api_key") ?? ""}
+                settingKey="dictation_llm_api_key"
                 placeholder={(getSetting("dictation_llm_provider") ?? "ollama") === "openai" ? "sk-..." : "sk-ant-..."}
-                onChange={(v) => updateSetting("dictation_llm_api_key", v)}
+                updateSetting={updateSetting}
               />
             )}
             <div>

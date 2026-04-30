@@ -114,12 +114,56 @@ pub async fn process_transcription(
 
 // ─── LLM Processing ─────────────────────────────────────
 
+/// Allow only schemes/hosts we trust for LLM endpoints. Ollama/LMStudio run
+/// on localhost; OpenAI/Anthropic use their public HTTPS APIs. Anything else
+/// (e.g. a wide-open `http://attacker.tld`) is rejected so a malicious
+/// endpoint can't return arbitrary text that lands in the user's keystroke
+/// stream via `text_injector::inject_text`.
+fn endpoint_is_safe(endpoint: &str) -> bool {
+    if endpoint.is_empty() {
+        return true; // falls back to a known-safe default
+    }
+    let lower = endpoint.to_ascii_lowercase();
+    if lower.starts_with("https://") {
+        return true;
+    }
+    // Accept only http on loopback for local LLM servers.
+    if let Some(rest) = lower.strip_prefix("http://") {
+        let authority = rest.split('/').next().unwrap_or("");
+        // Extract host: bracketed IPv6 keeps the brackets; otherwise split on `:`.
+        let host = if let Some(end) = authority.strip_prefix('[').and_then(|s| s.find(']').map(|i| &s[..i])) {
+            // `end` is the inner host without brackets.
+            return matches!(end, "::1");
+        } else {
+            authority.split(':').next().unwrap_or("")
+        };
+        return matches!(host, "localhost" | "127.0.0.1");
+    }
+    false
+}
+
+/// Strip control characters (newlines, NULs, escape sequences) from LLM
+/// output. Without this, a compromised endpoint could return a string
+/// containing `\n` to trigger Enter mid-paste, or terminal escape codes.
+fn sanitize_llm_output(s: &str) -> String {
+    s.chars()
+        .filter(|c| !c.is_control() || *c == ' ' || *c == '\t')
+        .collect()
+}
+
 async fn llm_process(
     text: &str,
     config: &DictationLlmConfig,
     frontmost_app: &str,
     dictionary_entries: &[String],
 ) -> String {
+    if !endpoint_is_safe(&config.endpoint) {
+        log::warn!(
+            "Rejecting LLM endpoint with unsafe scheme/host; using raw transcription"
+        );
+        return text.to_string();
+    }
+
     let system_prompt = build_system_prompt(config, frontmost_app, dictionary_entries);
     let client = Client::new();
 
@@ -129,12 +173,14 @@ async fn llm_process(
     };
 
     match result {
-        Ok(cleaned) if !cleaned.is_empty() => cleaned,
+        Ok(cleaned) if !cleaned.is_empty() => sanitize_llm_output(&cleaned),
         Ok(_) => {
             log::warn!("LLM returned empty response, using raw transcription");
             text.to_string()
         }
         Err(e) => {
+            // Log only the status/short reason, never the full body which may
+            // echo Authorization headers or API key fragments.
             log::warn!("LLM request failed: {}. Using raw transcription.", e);
             text.to_string()
         }
@@ -201,7 +247,8 @@ async fn call_openai_compatible(
         .map_err(|e| AppError::General(format!("Failed to parse response: {}", e)))?;
 
     if status.as_u16() >= 400 {
-        return Err(AppError::General(format!("LLM HTTP {}: {}", status, data)));
+        // Don't include the response body; some servers echo headers in errors.
+        return Err(AppError::General(format!("LLM HTTP {}", status)));
     }
 
     data["choices"][0]["message"]["content"]
@@ -257,7 +304,8 @@ async fn call_anthropic(
         .map_err(|e| AppError::General(format!("Failed to parse response: {}", e)))?;
 
     if status.as_u16() >= 400 {
-        return Err(AppError::General(format!("LLM HTTP {}: {}", status, data)));
+        // Don't include the response body; some servers echo headers in errors.
+        return Err(AppError::General(format!("LLM HTTP {}", status)));
     }
 
     data["content"][0]["text"]
@@ -385,6 +433,39 @@ pub fn default_dictation_prompt() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_endpoint_is_safe_https() {
+        assert!(endpoint_is_safe(""));
+        assert!(endpoint_is_safe("https://api.openai.com/v1/chat/completions"));
+        assert!(endpoint_is_safe("https://api.anthropic.com/v1/messages"));
+    }
+
+    #[test]
+    fn test_endpoint_is_safe_localhost_http() {
+        assert!(endpoint_is_safe("http://localhost:11434/v1/chat/completions"));
+        assert!(endpoint_is_safe("http://127.0.0.1:1234/v1/chat/completions"));
+        assert!(endpoint_is_safe("http://[::1]:11434/v1"));
+    }
+
+    #[test]
+    fn test_endpoint_rejects_remote_http_and_other_schemes() {
+        assert!(!endpoint_is_safe("http://attacker.tld/v1/chat/completions"));
+        assert!(!endpoint_is_safe("http://10.0.0.5/v1"));
+        assert!(!endpoint_is_safe("ftp://localhost/file"));
+        assert!(!endpoint_is_safe("file:///etc/passwd"));
+        assert!(!endpoint_is_safe("javascript:alert(1)"));
+    }
+
+    #[test]
+    fn test_sanitize_llm_output_strips_controls() {
+        assert_eq!(sanitize_llm_output("hello\nworld"), "helloworld");
+        assert_eq!(sanitize_llm_output("hello\rworld"), "helloworld");
+        assert_eq!(sanitize_llm_output("hello\u{0007}world"), "helloworld");
+        // Tabs and spaces preserved.
+        assert_eq!(sanitize_llm_output("hello\tworld"), "hello\tworld");
+        assert_eq!(sanitize_llm_output("hello world"), "hello world");
+    }
 
     #[test]
     fn test_normalize_transcription() {

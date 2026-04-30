@@ -59,6 +59,15 @@ pub fn transcribe(
     let mut segments = Vec::with_capacity(n_segments as usize);
     let mut current_speaker = 1u32;
 
+    // Compute global mic/system averages once instead of inside the per-segment
+    // helper, where it was O(N·M) over (segments × frames).
+    let energy_globals: Option<(f64, f64)> = energy.map(|frames| {
+        let n = frames.len().max(1) as f64;
+        let mic_avg: f64 = frames.iter().map(|f| f.mic_rms as f64).sum::<f64>() / n;
+        let sys_avg: f64 = frames.iter().map(|f| f.sys_rms as f64).sum::<f64>() / n;
+        (mic_avg, sys_avg)
+    });
+
     for i in 0..n_segments {
         let start_cs = state
             .full_get_segment_t0(i)
@@ -80,9 +89,9 @@ pub fn transcribe(
         let start_ms = start_cs * 10;
         let end_ms = end_cs * 10;
 
-        let speaker_label = if let Some(frames) = energy {
+        let speaker_label = if let (Some(frames), Some((g_mic, g_sys))) = (energy, energy_globals) {
             // Energy-based: compare mic vs system RMS over the segment range
-            speaker_from_energy(frames, start_ms, end_ms)
+            speaker_from_energy(frames, start_ms, end_ms, g_mic, g_sys)
         } else {
             // Tinydiarize fallback
             let label = format!("Speaker {current_speaker}");
@@ -110,7 +119,13 @@ pub fn transcribe(
 /// would make almost every segment "You". Instead, we normalize each channel against
 /// its own global average and compare the relative deviation — when the system channel
 /// spikes relative to its own baseline more than the mic does, the remote speaker is active.
-fn speaker_from_energy(frames: &[EnergyFrame], start_ms: i64, end_ms: i64) -> String {
+fn speaker_from_energy(
+    frames: &[EnergyFrame],
+    start_ms: i64,
+    end_ms: i64,
+    global_mic_avg: f64,
+    global_sys_avg: f64,
+) -> String {
     let mut mic_sum = 0.0f64;
     let mut sys_sum = 0.0f64;
     let mut count = 0u32;
@@ -130,11 +145,6 @@ fn speaker_from_energy(frames: &[EnergyFrame], start_ms: i64, end_ms: i64) -> St
     let mic_avg = mic_sum / count as f64;
     let sys_avg = sys_sum / count as f64;
 
-    // Compute global averages for normalization
-    let n = frames.len().max(1) as f64;
-    let global_mic_avg: f64 = frames.iter().map(|f| f.mic_rms as f64).sum::<f64>() / n;
-    let global_sys_avg: f64 = frames.iter().map(|f| f.sys_rms as f64).sum::<f64>() / n;
-
     // If system audio is essentially silent throughout, everything is "You"
     if global_sys_avg < 1e-4 {
         return "You".into();
@@ -145,9 +155,6 @@ fn speaker_from_energy(frames: &[EnergyFrame], start_ms: i64, end_ms: i64) -> St
         return "Other".into();
     }
 
-    // Compare how much each channel deviates from its own baseline.
-    // When the remote person speaks, system audio spikes relative to its average
-    // more than the mic does relative to its average.
     let mic_ratio = mic_avg / global_mic_avg;
     let sys_ratio = sys_avg / global_sys_avg;
 
@@ -217,12 +224,20 @@ mod tests {
         }).collect()
     }
 
+    fn globals(frames: &[EnergyFrame]) -> (f64, f64) {
+        let n = frames.len().max(1) as f64;
+        let mic = frames.iter().map(|f| f.mic_rms as f64).sum::<f64>() / n;
+        let sys = frames.iter().map(|f| f.sys_rms as f64).sum::<f64>() / n;
+        (mic, sys)
+    }
+
     #[test]
     fn speaker_from_energy_returns_you_when_system_silent() {
         let frames = make_energy_frames(&[
             (0.5, 0.0), (0.6, 0.0), (0.4, 0.0),
         ]);
-        assert_eq!(speaker_from_energy(&frames, 0, 300), "You");
+        let (gm, gs) = globals(&frames);
+        assert_eq!(speaker_from_energy(&frames, 0, 300, gm, gs), "You");
     }
 
     #[test]
@@ -230,37 +245,37 @@ mod tests {
         let frames = make_energy_frames(&[
             (0.0, 0.5), (0.0, 0.6), (0.0, 0.4),
         ]);
-        assert_eq!(speaker_from_energy(&frames, 0, 300), "Other");
+        let (gm, gs) = globals(&frames);
+        assert_eq!(speaker_from_energy(&frames, 0, 300, gm, gs), "Other");
     }
 
     #[test]
     fn speaker_from_energy_returns_you_when_mic_dominant() {
-        // Baseline: mic=0.3, sys=0.3. Segment: mic spikes more than sys.
         let frames = make_energy_frames(&[
-            (0.3, 0.3), (0.3, 0.3), (0.3, 0.3), // baseline
+            (0.3, 0.3), (0.3, 0.3), (0.3, 0.3),
             (0.3, 0.3), (0.3, 0.3),
-            (0.8, 0.35), (0.9, 0.3), (0.7, 0.32), // mic spike
+            (0.8, 0.35), (0.9, 0.3), (0.7, 0.32),
         ]);
-        // Query the spike region (500-800ms)
-        assert_eq!(speaker_from_energy(&frames, 500, 800), "You");
+        let (gm, gs) = globals(&frames);
+        assert_eq!(speaker_from_energy(&frames, 500, 800, gm, gs), "You");
     }
 
     #[test]
     fn speaker_from_energy_returns_other_when_system_dominant() {
-        // Baseline: mic=0.3, sys=0.3. Segment: sys spikes more than mic.
         let frames = make_energy_frames(&[
-            (0.3, 0.3), (0.3, 0.3), (0.3, 0.3), // baseline
+            (0.3, 0.3), (0.3, 0.3), (0.3, 0.3),
             (0.3, 0.3), (0.3, 0.3),
-            (0.35, 0.8), (0.3, 0.9), (0.32, 0.7), // sys spike
+            (0.35, 0.8), (0.3, 0.9), (0.32, 0.7),
         ]);
-        assert_eq!(speaker_from_energy(&frames, 500, 800), "Other");
+        let (gm, gs) = globals(&frames);
+        assert_eq!(speaker_from_energy(&frames, 500, 800, gm, gs), "Other");
     }
 
     #[test]
     fn speaker_from_energy_returns_you_when_no_frames_in_range() {
         let frames = make_energy_frames(&[(0.5, 0.5)]);
-        // Query range outside available frames
-        assert_eq!(speaker_from_energy(&frames, 5000, 6000), "You");
+        let (gm, gs) = globals(&frames);
+        assert_eq!(speaker_from_energy(&frames, 5000, 6000, gm, gs), "You");
     }
 
     #[test]
@@ -268,7 +283,7 @@ mod tests {
         let frames = make_energy_frames(&[
             (0.0, 0.0), (0.0, 0.0), (0.0, 0.0),
         ]);
-        // Both channels silent → global_sys_avg < 1e-4 → "You"
-        assert_eq!(speaker_from_energy(&frames, 0, 300), "You");
+        let (gm, gs) = globals(&frames);
+        assert_eq!(speaker_from_energy(&frames, 0, 300, gm, gs), "You");
     }
 }
