@@ -20,6 +20,7 @@ use tauri::{Manager, RunEvent};
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -114,6 +115,7 @@ pub fn run() {
             commands::settings::set_setting,
             commands::settings::clear_setting,
             commands::settings::is_setting_configured,
+            commands::system::get_process_memory,
             commands::meetings::list_meetings,
             commands::meetings::get_meeting,
             commands::meetings::delete_meeting,

@@ -11,6 +11,7 @@ import AppShell from "./components/layout/AppShell";
 import IconRail from "./components/layout/IconRail";
 import Sidebar from "./components/layout/Sidebar";
 import MainPanel from "./components/layout/MainPanel";
+import TitleBarChrome from "./components/layout/TitleBarChrome";
 import MeetingDetail from "./components/meetings/MeetingDetail";
 import MeetingEmpty from "./components/meetings/MeetingEmpty";
 import RecordingIndicator from "./components/recording/RecordingIndicator";
@@ -24,6 +25,7 @@ function App() {
   const [selectedMeetingId, setSelectedMeetingId] = useState<number | null>(null);
   const [onboardingReady, setOnboardingReady] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const { meetings, refresh } = useMeetings();
 
@@ -111,6 +113,12 @@ function App() {
 
   return (
     <>
+      {!settingsOpen && (
+        <TitleBarChrome
+          sidebarOpen={sidebarOpen}
+          onToggleSidebar={() => setSidebarOpen((v) => !v)}
+        />
+      )}
       <AppShell
         iconRail={
           settingsOpen ? undefined : (
@@ -123,7 +131,7 @@ function App() {
           )
         }
         sidebar={
-          settingsOpen ? undefined : (
+          settingsOpen || !sidebarOpen ? undefined : (
             <Sidebar
               meetings={meetings}
               selectedId={selectedMeetingId}
