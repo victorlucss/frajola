@@ -16,6 +16,8 @@
     "core:window:allow-set-focus",
     "core:window:allow-start-dragging",
     "global-shortcut:default",
-    "updater:default"
+    "updater:default",
+    "process:default",
+    "process:allow-restart"
   ]
 }
