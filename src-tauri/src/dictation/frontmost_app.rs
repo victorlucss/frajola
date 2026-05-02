@@ -15,22 +15,10 @@ pub fn get_frontmost_app() -> String {
 
 #[cfg(target_os = "windows")]
 pub fn get_frontmost_app() -> String {
-    use std::ffi::OsString;
-    use std::os::windows::ffi::OsStringExt;
-
-    unsafe {
-        let hwnd = windows::Win32::UI::WindowsAndMessaging::GetForegroundWindow();
-        if hwnd.0.is_null() {
-            return "Unknown".to_string();
-        }
-
-        let mut title = [0u16; 256];
-        let len = windows::Win32::UI::WindowsAndMessaging::GetWindowTextW(hwnd, &mut title);
-        if len > 0 {
-            let os_str = OsString::from_wide(&title[..len as usize]);
-            return os_str.to_string_lossy().into_owned();
-        }
-    }
+    // The previous implementation referenced the `windows` crate but it was
+    // never declared in Cargo.toml. Until the Win32 frontmost-app probe is
+    // properly added back (tracked separately), Windows reports "Unknown" so
+    // the LLM prompt-builder still gets a valid string.
     "Unknown".to_string()
 }
 

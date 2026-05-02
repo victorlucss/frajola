@@ -71,6 +71,7 @@ jobs:
             libappindicator3-dev \
             libasound2-dev \
             librsvg2-dev \
+            libxdo-dev \
             patchelf
 
       - name: Install JavaScript dependencies

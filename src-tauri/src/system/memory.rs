@@ -7,8 +7,6 @@
 //! `ps` is invoked through a child process so it MUST run inside
 //! `spawn_blocking` (it's slow on the order of milliseconds).
 
-use std::process::Command;
-
 /// Returns the resident-set size of the current process in bytes.
 /// `0` on failure (caller can decide whether to surface or hide the pill).
 pub fn current_rss_bytes() -> u64 {
@@ -17,6 +15,7 @@ pub fn current_rss_bytes() -> u64 {
 
 #[cfg(any(target_os = "macos", target_os = "linux"))]
 fn rss_via_ps() -> Option<u64> {
+    use std::process::Command;
     let pid = std::process::id().to_string();
     let output = Command::new("ps")
         .args(["-o", "rss=", "-p", &pid])
